@@ -57,6 +57,38 @@ public final class Story {
                     new Line(0, "Tú (Aprendiz)", "No eres el primero ni el último, Aldric. La Torre seguirá aquí cuando tu nombre sea polvo."),
                     new Line(1, "Mocha", "Miau. (Fin del modo historia. Las oleadas infinitas... empiezan ahora.)"),
             }),
+            new Chapter("Capítulo 6: La flecha rota", 60, new Line[] {
+                    new Line(4, "Elara", "Alto... ¿qué estamos haciendo? He gastado mil flechas y tu torre sigue en pie."),
+                    new Line(0, "Tú (Guardián)", "¿Capitana Elara? ¿Vienes a rendirte?"),
+                    new Line(4, "Elara", "Vengo a advertirte: Aldric ha contratado a los Asedios Dorados. Mercenarios que no conocen el miedo."),
+                    new Line(1, "Mocha", "Miau. (Le creo. Huele a problema.)"),
+                    new Line(0, "Tú (Guardián)", "Entonces seguiremos invocando. Gracias, capitana: la torre siempre tendrá sitio para quien la defienda."),
+            }),
+            new Chapter("Capítulo 7: El asedio de las cien banderas", 70, new Line[] {
+                    new Line(2, "Sir Aldric", "¡Cien banderas! Cada casa noble del reino marcha contra tu torre, aprendiz."),
+                    new Line(0, "Tú (Guardián)", "Cien banderas, cien tesoros para mis monstruos."),
+                    new Line(2, "Sir Aldric", "¿No lo entiendes? ¡Es el fin!"),
+                    new Line(0, "Tú (Guardián)", "No. Es la oleada 70. Las otras 69 también decían que era el fin."),
+            }),
+            new Chapter("Capítulo 8: El Grimorio susurra", 80, new Line[] {
+                    new Line(3, "Maestro Orin", "Aprendiz... ¿lo oyes? El Grimorio despierta. Cada moneda que defiendes lo hace más fuerte... y más hambriento."),
+                    new Line(0, "Tú (Guardián)", "¿Hambriento?"),
+                    new Line(3, "Maestro Orin", "El oro llama al oro. Pronto querrá más. Prométeme que nunca lo alimentarás con lo que amas."),
+                    new Line(1, "Mocha", "Miau... (Yo no como oro. Bueno... casi nunca.)"),
+            }),
+            new Chapter("Capítulo 9: El precio del oro", 90, new Line[] {
+                    new Line(2, "Sir Aldric", "Última oferta: dime el secreto del Grimorio y te doy la mitad del reino."),
+                    new Line(0, "Tú (Guardián)", "El secreto no es el oro, Aldric. Es lo que proteges con él. Tú proteges tu codicia; yo protejo a mi familia."),
+                    new Line(1, "Mocha", "Miau. (Familia soy yo. Por supuesto.)"),
+                    new Line(0, "Tú (Guardián)", "Vuelve con tus héroes si quieres. La torre estará aquí."),
+            }),
+            new Chapter("Capítulo 10: El Invocador Coronado", 100, new Line[] {
+                    new Line(2, "Sir Aldric", "Basta... me rindo. ¿De qué sirve una corona de héroe si no quedan héroes que la quieran llevar?"),
+                    new Line(4, "Elara", "El rey ha caído... de rodillas. La torre gana."),
+                    new Line(0, "Tú (Guardián)", "Aquí no hay rey ni aprendiz, Aldric. Solo un invocador y sus monstruos. Quédate como aliado... o vete en paz."),
+                    new Line(1, "Mocha", "Miau miau. (Modo historia completado. Oleadas infinitas: desbloqueadas. Ahora, ¿me das atún?)"),
+                    new Line(3, "Maestro Orin", "Bien hecho, aprendiz. Ya no eres aprendiz... eres el Guardián del Grimorio."),
+            }),
     };
 
     /** Capítulo que debe mostrarse al alcanzar la oleada n, o -1 si ninguno. */

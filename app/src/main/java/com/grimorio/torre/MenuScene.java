@@ -11,48 +11,37 @@ import android.graphics.Shader;
 public class MenuScene implements GameView.Scene {
 
     GameView g;
-    Ui.Btn bPlay, bSummon, bShop, bPass, bStory, bSnd, bMus;
+    Ui.Btn bPlay, bSummon, bShop, bQuests, bPass, bStory;
     boolean showOffline;
     String offlineMsg;
     boolean checked = false;
 
     public MenuScene(GameView g) {
         this.g = g;
-        bPlay = new Ui.Btn(290, 1000, 500, 130, "JUGAR", 0xFF66BB6A, 0xFF2E7D32, new Runnable() {
+        bPlay = new Ui.Btn(290, 950, 500, 120, "JUGAR", 0xFF66BB6A, 0xFF2E7D32, new Runnable() {
             public void run() { g.setScene(new GameScene(g)); }
         });
-        bSummon = new Ui.Btn(290, 1155, 500, 105, "Invocar monstruos", 0xFFAB47BC, 0xFF6A1B9A, new Runnable() {
+        bSummon = new Ui.Btn(290, 1090, 500, 100, "Invocar monstruos", 0xFFAB47BC, 0xFF6A1B9A, new Runnable() {
             public void run() { g.setScene(new SummonScene(g)); }
         });
-        bShop = new Ui.Btn(290, 1280, 500, 105, "Tienda y mejoras", 0xFFFFB300, 0xFFE65100, new Runnable() {
+        bShop = new Ui.Btn(290, 1210, 500, 100, "Tienda y mejoras", 0xFFFFB300, 0xFFE65100, new Runnable() {
             public void run() { g.setScene(new ShopScene(g)); }
         });
-        bPass = new Ui.Btn(290, 1405, 500, 105, "Pase del Invocador", 0xFF42A5F5, 0xFF1565C0, new Runnable() {
+        bQuests = new Ui.Btn(290, 1330, 500, 100, "Misiones diarias", 0xFF26C6DA, 0xFF00838F, new Runnable() {
+            public void run() { g.setScene(new DailyScene(g)); }
+        });
+        bPass = new Ui.Btn(290, 1450, 500, 100, "Pase del Invocador", 0xFF42A5F5, 0xFF1565C0, new Runnable() {
             public void run() { g.setScene(new SubScene(g)); }
         });
-        bStory = new Ui.Btn(290, 1530, 500, 95, "Historia", 0xFF90A4AE, 0xFF455A64, new Runnable() {
+        bStory = new Ui.Btn(290, 1570, 500, 90, "Historia", 0xFF90A4AE, 0xFF455A64, new Runnable() {
             public void run() { g.setScene(new StoryScene(g, Math.max(0, g.save.story - 1), new MenuScene(g))); }
-        });
-        bSnd = new Ui.Btn(60, 1770, 220, 90, "", 0xFF78909C, 0xFF455A64, new Runnable() {
-            public void run() {
-                g.save.soundOn = !g.save.soundOn;
-                Sound.setOn(g.save.soundOn);
-                if (g.save.soundOn) Sound.play(Sound.CLICK);
-                g.persist();
-            }
-        });
-        bMus = new Ui.Btn(300, 1770, 220, 90, "", 0xFF78909C, 0xFF455A64, new Runnable() {
-            public void run() {
-                g.save.musicOn = !g.save.musicOn;
-                g.persist();
-                g.applyMusic();
-            }
         });
     }
 
     public void update(float dt) {
         if (checked) return;
         checked = true;
+        Quests.checkDay(g.save);
         long now = System.currentTimeMillis();
         long elapsed = now - g.save.lastSeen;
         if (elapsed > 120000 && g.save.incomePerSec() > 0) {
@@ -71,8 +60,7 @@ public class MenuScene implements GameView.Scene {
     public void touch(int action, float x, float y) {
         if (action != android.view.MotionEvent.ACTION_UP) return;
         if (showOffline) { showOffline = false; return; }
-        hit(bPlay, x, y); hit(bSummon, x, y); hit(bShop, x, y); hit(bPass, x, y); hit(bStory, x, y);
-        hit(bSnd, x, y); hit(bMus, x, y);
+        hit(bPlay, x, y); hit(bSummon, x, y); hit(bShop, x, y); hit(bQuests, x, y); hit(bPass, x, y); hit(bStory, x, y);
         if (dailyAvailable() && Math.abs(x - 540) < 280 && Math.abs(y - 880) < 60) {
             g.save.lastDailyClaim = System.currentTimeMillis();
             g.save.addGems(100);
@@ -176,12 +164,16 @@ public class MenuScene implements GameView.Scene {
         bPlay.draw(c, t);
         bSummon.draw(c, t);
         bShop.draw(c, t);
+        bQuests.draw(c, t);
+        boolean hayPremio = false;
+        for (int i = 0; i < 3; i++) if (Quests.done(g.save, i) && !Quests.claimed(g.save, i)) hayPremio = true;
+        if (hayPremio) {
+            float pulse = 1 + (float) Math.sin(t * 6) * 0.15f;
+            c.drawCircle(770, 1330, 34 * pulse, Ui.paint(0xFFE53935));
+            Ui.textCO(c, "!", 770, 1348, 44 * pulse, true, 0xFFFFFFFF);
+        }
         bPass.draw(c, t);
         bStory.draw(c, t);
-        bSnd.label = "Sonido: " + (g.save.soundOn ? "SÍ" : "NO");
-        bMus.label = "Música: " + (g.save.musicOn ? "SÍ" : "NO");
-        bSnd.draw(c, t);
-        bMus.draw(c, t);
 
         if (!g.save.paseDisponible()) {
             Ui.textCO(c, "Prueba de fundador: " + g.save.diasPruebaRestantes() + " día(s) restantes",
@@ -191,7 +183,7 @@ public class MenuScene implements GameView.Scene {
         } else {
             Ui.textCO(c, "Tu prueba terminó: ¡suscríbete al Pase!", 540, 1700, 30, true, 0xFFB71C1C);
         }
-        Ui.textCO(c, "v1.2 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
+        Ui.textCO(c, "v1.3 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
 
         if (showOffline) {
             Paint dim = Ui.paint(0x99000000);

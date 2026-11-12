@@ -90,6 +90,10 @@ public class GameScene implements GameView.Scene {
     int selected = -1;
     float saveT;
 
+    int tut;
+    int placedAtTut;
+    Ui.Btn bSkip;
+
     Ui.Btn btnSpeed, btnPause, btnEdit, btnSummon, btnShop;
     Ui.Btn bResume, bMenu, bUp, bSell, bMove, bClose, bSnd, bMus;
     boolean showPausePanel;
@@ -158,6 +162,12 @@ public class GameScene implements GameView.Scene {
         bClose = new Ui.Btn(840, 1530, 180, 90, "Cerrar", 0xFF90A4AE, 0xFF455A64, new Runnable() {
             public void run() { selected = -1; }
         });
+        bSkip = new Ui.Btn(820, 1740, 220, 90, "Saltar \u25b6", 0xFFEF5350, 0xFFB71C1C, new Runnable() {
+            public void run() { finishTutorial(); }
+        });
+
+        tut = g.save.tutorialStep;
+        if (g.save.bestWave == 0 && tut == 0) tut = 1;
 
         if (g.save.bestWave == 0) {
             int ch = Story.chapterForWave(1, g.save.story);
@@ -294,6 +304,7 @@ public class GameScene implements GameView.Scene {
 
     private void waveCleared() {
         int n = g.save.wave;
+        g.save.qWaves++;
         long bonus = (long) ((60 + 25 * n) * g.save.goldMult());
         g.save.gold += bonus;
         int gems = 0;
@@ -352,6 +363,12 @@ public class GameScene implements GameView.Scene {
         if (dtg > 0) updateHeroes(dtg);
         if (dtg > 0) updateMonsters(dtg);
         if (dtg > 0) updateProjs(dtg);
+
+        // tutorial: congela la oleada y avanza pasos
+        if (tut >= 1 && tut <= 4) spawnT = Math.max(spawnT, 1f);
+        if (tut == 1 && placingBench >= 0) { tut = 2; placedAtTut = placed.size(); }
+        if (tut == 2 && placed.size() > placedAtTut) tut = 3;
+        if (tut == 4 && speed > 1) tut = 5;
 
         for (int i = fts.size() - 1; i >= 0; i--) {
             FT f = fts.get(i);
@@ -519,6 +536,7 @@ public class GameScene implements GameView.Scene {
                 if (h.hp <= 0) {
                     long rw = (long) (Defs.killReward(h.d, g.save.wave) * g.save.goldMult());
                     g.save.gold += rw;
+                    g.save.qKills++;
                     Sound.play(Sound.COIN);
                     burst(h.x, h.y - 30, 0xFFFFC93C, 12, 260, 750, 10);
                     fts.add(ft(h.x, h.y - 70, "+" + Ui.fmt(rw), 0xFFFFC93C));
@@ -595,6 +613,20 @@ public class GameScene implements GameView.Scene {
             }
             return;
         }
+        if (tut > 0) {
+            if (down) {
+                if (press(bSkip, x, y)) return;
+                if (tut == 1) handleBenchTap(g.save.bench(), x, y);
+                else if (tut == 2) handleBoardTap(x, y);
+                else if (tut == 4) press(btnSpeed, x, y);
+            } else {
+                click(bSkip, x, y);
+                if (tut == 1) handleBenchRelease(x, y);
+                else if (tut == 4) click(btnSpeed, x, y);
+                else if (tut == 3 || tut == 5) advanceTutorial();
+            }
+            return;
+        }
         if (down) {
             if (press(btnSpeed, x, y)) return;
             if (press(btnPause, x, y)) return;
@@ -604,39 +636,7 @@ public class GameScene implements GameView.Scene {
             // banquillo
             ArrayList<Save.Mon> bench = g.save.bench();
             if (handleBenchTap(bench, x, y)) return;
-            // celdas del tablero
-            int col = (int) ((x - X0) / TILE), row = (int) ((y - Y0) / TILE);
-            if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
-                int cell = row * COLS + col;
-                if (placingBench >= 0) {
-                    if (valid[cell] && !occupied(cell) && g.save.placedCount() < g.save.maxSlots(g.save.wave)) {
-                        Save.Mon m = bench.get(placingBench);
-                        m.cell = cell;
-                        placingBench = -1;
-                        rebuildPlaced();
-                        g.persist();
-                    }
-                    return;
-                }
-                if (pickedUp >= 0) {
-                    if (valid[cell] && !occupied(cell)) {
-                        placed.get(pickedUp).src.cell = cell;
-                        pickedUp = -1;
-                        rebuildPlaced();
-                        g.persist();
-                    }
-                    return;
-                }
-                if (editMode) {
-                    for (int i = 0; i < placed.size(); i++) {
-                        RMon m = placed.get(i);
-                        if (Math.abs(m.x - x) < TILE / 2 && Math.abs(m.y - y) < TILE / 2) {
-                            selected = i;
-                            return;
-                        }
-                    }
-                }
-            }
+            handleBoardTap(x, y);
         } else {
             click(btnSpeed, x, y);
             click(btnPause, x, y);
@@ -645,6 +645,56 @@ public class GameScene implements GameView.Scene {
             click(btnShop, x, y);
             handleBenchRelease(x, y);
         }
+    }
+
+    private void handleBoardTap(float x, float y) {
+        int col = (int) ((x - X0) / TILE), row = (int) ((y - Y0) / TILE);
+        if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+        int cell = row * COLS + col;
+        if (placingBench >= 0) {
+            if (valid[cell] && !occupied(cell) && g.save.placedCount() < g.save.maxSlots(g.save.wave)) {
+                Save.Mon m = g.save.bench().get(placingBench);
+                m.cell = cell;
+                placingBench = -1;
+                rebuildPlaced();
+                g.persist();
+            }
+            return;
+        }
+        if (pickedUp >= 0) {
+            if (valid[cell] && !occupied(cell)) {
+                placed.get(pickedUp).src.cell = cell;
+                pickedUp = -1;
+                rebuildPlaced();
+                g.persist();
+            }
+            return;
+        }
+        if (editMode) {
+            for (int i = 0; i < placed.size(); i++) {
+                RMon m = placed.get(i);
+                if (Math.abs(m.x - x) < TILE / 2 && Math.abs(m.y - y) < TILE / 2) {
+                    selected = i;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void advanceTutorial() {
+        if (tut == 3) tut = 4;
+        else if (tut == 5) {
+            g.save.tutorialStep = -1;
+            tut = -1;
+            g.persist();
+            g.toast("\u00a1Tutorial completado! \u00a1Suerte, Invocador!");
+        }
+    }
+
+    private void finishTutorial() {
+        g.save.tutorialStep = -1;
+        tut = -1;
+        g.persist();
     }
 
     private float benchDownX, benchDownY;
@@ -773,6 +823,7 @@ public class GameScene implements GameView.Scene {
         if (placingBench >= 0 || pickedUp >= 0) drawValidCells(c);
         if (selected >= 0) drawInfoPanel(c);
         if (showPausePanel) drawPausePanel(c);
+        if (tut > 0) drawTutorial(c, t);
         if (bannerT > 0 && banner != null) {
             Ui.panel(c, 90, 420, 900, 130, 0xFF37474F, 0xFF263238);
             Ui.textCO(c, banner, 540, 500, 44, true, 0xFFFFC93C);
@@ -981,5 +1032,55 @@ public class GameScene implements GameView.Scene {
         bSnd.draw(c, 0);
         bMus.draw(c, 0);
         Ui.textCO(c, "El oro se sigue ganando mientras estés fuera", 540, 1390, 26, false, 0xFF2E7D32);
+    }
+
+    private void drawTutorial(Canvas c, float t) {
+        c.drawRect(0, 0, 1080, 1920, Ui.paint(0x88000000));
+        float pulse = 5 + (float) Math.sin(t * 6) * 4;
+        Paint hl = Ui.paint(0);
+        hl.setStyle(Paint.Style.STROKE);
+        hl.setStrokeWidth(10);
+        hl.setColor(0xFFFFEB3B);
+
+        String l1, l2;
+        if (tut == 1) {
+            int n = Math.min(g.save.bench().size(), 4);
+            for (int i = 0; i < n; i++) {
+                float bx = 80 + i * 170, by = 1720;
+                c.drawRoundRect(new RectF(bx - pulse, by - pulse, bx + 140 + pulse, by + 140 + pulse), 26, 26, hl);
+            }
+            l1 = "¡Bienvenido, Invocador!";
+            l2 = "Toca un monstruo del banquillo para elegirlo";
+        } else if (tut == 2) {
+            for (int r = 0; r < ROWS; r++) {
+                for (int col = 0; col < COLS; col++) {
+                    int cell = r * COLS + col;
+                    if (!valid[cell] || occupied(cell)) continue;
+                    float cx2 = X0 + col * TILE, cy2 = Y0 + r * TILE;
+                    c.drawRoundRect(new RectF(cx2, cy2, cx2 + TILE, cy2 + TILE), 16, 16, Ui.paint(0x5566BB6A));
+                    c.drawRoundRect(new RectF(cx2 + pulse, cy2 + pulse, cx2 + TILE - pulse, cy2 + TILE - pulse), 16, 16, hl);
+                }
+            }
+            l1 = "¡Buena elección!";
+            l2 = "Toca una celda verde junto al camino";
+        } else if (tut == 3) {
+            float cx2 = cellCenterX(chestCell), cy2 = cellCenterY(chestCell);
+            c.drawCircle(cx2, cy2, TILE * 0.6f + pulse, hl);
+            l1 = "¡Perfecto! Tus monstruos defienden el Grimorio";
+            l2 = "Toca la pantalla para continuar";
+        } else if (tut == 4) {
+            c.drawRoundRect(new RectF(640 - pulse, 150 - pulse, 640 + 130 + pulse, 150 + 78 + pulse), 20, 20, hl);
+            l1 = "¿Muy lento? Acelera la batalla";
+            l2 = "Toca el botón de velocidad (x2 / x4)";
+        } else {
+            c.drawRoundRect(new RectF(300 - pulse, 1712 - pulse, 300 + 230 + pulse, 1712 + 92 + pulse), 20, 20, hl);
+            l1 = "¡Ya sabes jugar! Gasta gemas para";
+            l2 = "invocar monstruos más fuertes. Toca para empezar";
+        }
+
+        Ui.panel(c, 70, 260, 940, 170, 0xFFF7EBC9, 0xFF8D6E63);
+        Ui.textCO(c, l1, 540, 325, 34, true, 0xFF3A2E20);
+        Ui.textCO(c, l2, 540, 385, 34, true, 0xFF2E7D32);
+        bSkip.draw(c, t);
     }
 }

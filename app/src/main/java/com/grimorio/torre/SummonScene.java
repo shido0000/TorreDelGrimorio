@@ -51,6 +51,7 @@ public class SummonScene implements GameView.Scene {
             for (Save.Mon m : g.save.mons) if (m.id.equals(id)) { existed = true; break; }
             r.isNew = !existed;
             r.lvl = g.save.addOrLevel(id) ? (findLvl(id)) : 1;
+            g.save.qSummons++;
             results.add(r);
         }
         g.persist();

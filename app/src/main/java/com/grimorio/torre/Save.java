@@ -62,6 +62,14 @@ public final class Save {
     public boolean soundOn = true;
     public boolean musicOn = true;
 
+    // Tutorial (0 = pendiente, 1..5 pasos, -1 completado)
+    public int tutorialStep = 0;
+
+    // Misiones diarias
+    public long questDay = -1;
+    public int qKills, qWaves, qSummons;
+    public int qClaimed;
+
     private static final String PREF = "grimorio";
     private static final String KEY = "save";
 
@@ -101,10 +109,17 @@ public final class Save {
             story = o.optInt("story", 0);
             soundOn = o.optBoolean("soundOn", true);
             musicOn = o.optBoolean("musicOn", true);
+            tutorialStep = o.optInt("tutorialStep", 0);
+            questDay = o.optLong("questDay", -1);
+            qKills = o.optInt("qKills", 0);
+            qWaves = o.optInt("qWaves", 0);
+            qSummons = o.optInt("qSummons", 0);
+            qClaimed = o.optInt("qClaimed", 0);
             mons.clear();
             JSONArray arr = o.optJSONArray("mons");
             if (arr != null) for (int i = 0; i < arr.length(); i++) mons.add(Mon.fromJson(arr.getJSONObject(i)));
             initDefaults();
+            Quests.checkDay(this);
         } catch (Exception e) {
             install = System.currentTimeMillis();
             initDefaults();
@@ -131,6 +146,12 @@ public final class Save {
             o.put("story", story);
             o.put("soundOn", soundOn);
             o.put("musicOn", musicOn);
+            o.put("tutorialStep", tutorialStep);
+            o.put("questDay", questDay);
+            o.put("qKills", qKills);
+            o.put("qWaves", qWaves);
+            o.put("qSummons", qSummons);
+            o.put("qClaimed", qClaimed);
             JSONArray arr = new JSONArray();
             for (Mon m : mons) arr.put(m.toJson());
             o.put("mons", arr);
