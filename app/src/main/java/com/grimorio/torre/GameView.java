@@ -43,6 +43,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         save.load(act);
         if (save.install == 0) save.install = System.currentTimeMillis();
         save.lastSeen = System.currentTimeMillis();
+        Art.init(act);
         billing = new Billing(act, this);
         billing.start();
         setScene(new MenuScene(this));

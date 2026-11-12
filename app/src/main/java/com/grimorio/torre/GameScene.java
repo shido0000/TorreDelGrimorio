@@ -645,7 +645,7 @@ public class GameScene implements GameView.Scene {
             c.drawArc(new RectF(s.x - 40, s.y - 40, s.x + 40, s.y + 40), s.ang - 50, 100, false, sp);
         }
         for (FT f : fts) {
-            Ui.textC(c, f.txt, f.x, f.y, 40, true, f.col);
+            Ui.textCO(c, f.txt, f.x, f.y, 40, true, f.col);
         }
 
         drawHud(c, t);
@@ -653,8 +653,8 @@ public class GameScene implements GameView.Scene {
         if (selected >= 0) drawInfoPanel(c);
         if (showPausePanel) drawPausePanel(c);
         if (bannerT > 0 && banner != null) {
-            Ui.panel(c, 90, 420, 900, 130, 0xFF33323A, 0x00000000);
-            Ui.textC(c, banner, 540, 500, 44, true, 0xFFFFC93C);
+            Ui.panel(c, 90, 420, 900, 130, 0xFF37474F, 0xFF263238);
+            Ui.textCO(c, banner, 540, 500, 44, true, 0xFFFFC93C);
         }
     }
 
@@ -673,26 +673,55 @@ public class GameScene implements GameView.Scene {
     private void drawBoard(Canvas c, float t) {
         int chapter = ((g.save.wave - 1) / 10) % 4;
         int[] grass = {0xFF7EC850, 0xFF5FAE4A, 0xFF8CCB5E, 0xFF6DBE55};
-        int[] grassD = {0xFF6FB844, 0xFF529E3F, 0xFF7DBE52, 0xFF5FAE4A};
+        int[] grassD = {0xFF74BD49, 0xFF55A543, 0xFF81C258, 0xFF63B44E};
         int[] pathCol = {0xFFC8996A, 0xFFB08A5E, 0xFFD0A475, 0xFFA9835C};
-        int gc = grass[chapter], gd = grassD[chapter], pc = pathCol[chapter];
+        int pc = pathCol[chapter];
 
-        // césped a cuadros
-        Paint pg = Ui.paint(gc);
-        c.drawRect(0, 0, 1080, 1920, pg);
-        Paint pd = Ui.paint(gd);
+        // franja de cielo con nubes detrás del HUD
+        Paint sky = Ui.paint(0);
+        sky.setShader(new android.graphics.LinearGradient(0, 0, 0, Y0,
+                0xFF8ED6FF, 0xFFCDEFB8, android.graphics.Shader.TileMode.CLAMP));
+        c.drawRect(0, 0, 1080, Y0, sky);
+        Paint cloud = Ui.paint(0xD9FFFFFF);
+        for (int i = 0; i < 4; i++) {
+            float cx2 = ((t * (12 + i * 5) + i * 340) % 1300) - 110;
+            float cy2 = 60 + (i % 2) * 70;
+            c.drawOval(new RectF(cx2 - 90, cy2 - 28, cx2 + 90, cy2 + 28), cloud);
+            c.drawOval(new RectF(cx2 - 40, cy2 - 52, cx2 + 50, cy2 + 10), cloud);
+        }
+
+        // césped con degradado y cuadros
+        Paint pg = Ui.paint(0);
+        pg.setShader(new android.graphics.LinearGradient(0, Y0, 0, 1920,
+                Ui.lighten(grass[chapter], 0.10f), Ui.darken(grass[chapter], 0.10f), android.graphics.Shader.TileMode.CLAMP));
+        c.drawRect(0, Y0, 1080, 1920, pg);
+        Paint pd = Ui.paint(grassD[chapter]);
         for (int r = 0; r < ROWS; r++)
             for (int col = 0; col < COLS; col++)
                 if ((r + col) % 2 == 0)
                     c.drawRect(X0 + col * TILE, Y0 + r * TILE, X0 + col * TILE + TILE, Y0 + r * TILE + TILE, pd);
 
-        // camino
+        // briznas de hierba deterministas
+        Random gr = new Random(55 + chapter);
+        Paint blade = Ui.paint(Ui.darken(grass[chapter], 0.28f));
+        blade.setStrokeWidth(5);
+        for (int i = 0; i < 90; i++) {
+            float x = gr.nextFloat() * 1080;
+            float y = Y0 + gr.nextFloat() * (1920 - Y0);
+            int cell = (int) (((y - Y0) / TILE)) * COLS + (int) ((x - X0) / TILE);
+            if (cell < 0 || cell >= isPath.length || isPath[cell]) continue;
+            c.drawLine(x, y, x - 8, y - 22, blade);
+            c.drawLine(x, y, x, y - 28, blade);
+            c.drawLine(x, y, x + 8, y - 20, blade);
+        }
+
+        // camino: borde oscuro + relleno + línea central discontinua
         Path pth = new Path();
         pth.moveTo(segX[0], segY[0]);
         for (int i = 1; i < segX.length; i++) pth.lineTo(segX[i], segY[i]);
-        Paint pb = Ui.paint(0xFF8D6E63);
+        Paint pb = Ui.paint(0xFF6D4C41);
         pb.setStyle(Paint.Style.STROKE);
-        pb.setStrokeWidth(TILE * 0.98f);
+        pb.setStrokeWidth(TILE * 1.0f);
         pb.setStrokeCap(Paint.Cap.BUTT);
         pb.setStrokeJoin(Paint.Join.ROUND);
         c.drawPath(pth, pb);
@@ -702,29 +731,41 @@ public class GameScene implements GameView.Scene {
         pcx.setStrokeCap(Paint.Cap.BUTT);
         pcx.setStrokeJoin(Paint.Join.ROUND);
         c.drawPath(pth, pcx);
-        // piedritas del camino
-        Paint peb = Ui.paint(0x55FFFFFF);
+        Paint pIn = Ui.paint(Ui.lighten(pc, 0.18f));
+        pIn.setStyle(Paint.Style.STROKE);
+        pIn.setStrokeWidth(10);
+        pIn.setPathEffect(new android.graphics.DashPathEffect(new float[]{34, 30}, 0));
+        c.drawPath(pth, pIn);
+        // piedritas
+        Paint peb = Ui.paint(0x59FFFFFF);
         Random rnd = new Random(1234);
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 46; i++) {
             float d = rnd.nextFloat() * pathLen;
             posAt(d, tmpPos);
             float ox2 = (rnd.nextFloat() - 0.5f) * TILE * 0.5f;
             c.drawCircle(tmpPos[0] + ox2, tmpPos[1] + (rnd.nextFloat() - 0.5f) * TILE * 0.4f, 5 + rnd.nextFloat() * 6, peb);
         }
 
-        // decoración determinista
+        // decoración con sprites
         Random dr = new Random(77 + chapter);
-        for (int i = 0; i < 26; i++) {
+        for (int i = 0; i < 30; i++) {
             int col = dr.nextInt(COLS), row = dr.nextInt(ROWS);
             int cell = row * COLS + col;
             if (isPath[cell] || valid[cell]) continue;
             float x = X0 + col * TILE + TILE / 2f + (dr.nextFloat() - 0.5f) * 30;
             float y = Y0 + row * TILE + TILE / 2f + (dr.nextFloat() - 0.5f) * 30;
-            int kind = dr.nextInt(3);
-            if (kind == 0) Art.drawTree(c, x, y, TILE * 0.9f, dr.nextInt(3));
-            else if (kind == 1) Art.drawRock(c, x, y, TILE * 0.5f);
-            else Art.drawFlower(c, x, y, TILE * 0.4f, dr.nextInt(3));
+            int kind = dr.nextInt(5);
+            if (kind == 0) Art.drawTree(c, x, y, TILE * 1.0f, dr.nextInt(3));
+            else if (kind == 1) Art.drawRock(c, x, y, TILE * 0.55f);
+            else if (kind == 2) Art.drawFlower(c, x, y, TILE * 0.42f, dr.nextInt(3));
+            else if (kind == 3) Art.drawBush(c, x, y, TILE * 0.6f);
         }
+
+        // viñeta sutil
+        Paint vg = Ui.paint(0);
+        vg.setShader(new android.graphics.RadialGradient(540, 960, 1150,
+                0x00000000, 0x26000000, android.graphics.Shader.TileMode.CLAMP));
+        c.drawRect(0, 0, 1080, 1920, vg);
 
         // entrada: portal por donde entran los héroes
         float ex = segX[0] + 20, ey = segY[0];
@@ -739,38 +780,38 @@ public class GameScene implements GameView.Scene {
 
     private void drawHud(Canvas c, float t) {
         // barra superior
-        Ui.panel(c, 30, 30, 1020, 96, 0xFFF5E6C8, 0xFF8D6E63);
-        Art.drawCoin(c, 90, 78, 30);
-        Ui.textC(c, Ui.fmt(g.save.gold), 140, 90, 40, true, 0xFFB8860B);
-        Art.drawGem(c, 420, 78, 26);
-        Ui.textC(c, String.valueOf(g.save.gems), 460, 90, 40, true, 0xFF00838F);
-        Ui.textC(c, "+" + Ui.fmt(g.save.incomePerSec()) + "/s", 700, 90, 34, true, 0xFF2E7D32);
-        Ui.textC(c, "Oleada " + g.save.wave, 950, 66, 40, true, 0xFF3A2E20);
+        Ui.panel(c, 30, 30, 1020, 100, 0xFFF7EBC9, 0xFF8D6E63);
+        Art.drawCoin(c, 92, 80, 32);
+        Ui.textCO(c, Ui.fmt(g.save.gold), 148, 94, 42, true, 0xFF9C6A00);
+        Art.drawGem(c, 430, 80, 28);
+        Ui.textCO(c, String.valueOf(g.save.gems), 474, 94, 42, true, 0xFF00838F);
+        Ui.textCO(c, "+" + Ui.fmt(g.save.incomePerSec()) + "/s", 705, 92, 34, true, 0xFF2E7D32);
+        Ui.textCO(c, "Oleada " + g.save.wave, 948, 70, 42, true, 0xFF3A2E20);
         int alive = heroes.size() + queue.size();
-        Ui.textC(c, alive > 0 ? "Héroes: " + alive : "Camino despejado", 950, 112, 26, false, 0xFF6D4C41);
+        Ui.textCO(c, alive > 0 ? "Héroes: " + alive : "Camino despejado", 948, 116, 26, false, 0xFF6D4C41);
         btnSpeed.draw(c, t);
         btnPause.draw(c, t);
 
         // barra inferior
-        Ui.panel(c, 30, 1660, 760, 230, 0xFFF5E6C8, 0xFF8D6E63);
-        Ui.textC(c, editMode ? "Modo edición: toca un monstruo" : "Toca un monstruo del banquillo", 410, 1700, 28, true, 0xFF6D4C41);
+        Ui.panel(c, 30, 1660, 760, 230, 0xFFF7EBC9, 0xFF8D6E63);
+        Ui.textCO(c, editMode ? "Modo edición: toca un monstruo" : "Toca un monstruo del banquillo", 410, 1704, 28, true, 0xFF6D4C41);
         ArrayList<Save.Mon> bench = g.save.bench();
         int n = Math.min(bench.size(), 4);
         for (int i = 0; i < n; i++) {
             Save.Mon m = bench.get(i);
             float bx = 80 + i * 170, by = 1720;
             boolean sel = placingBench == i;
-            Paint bp = Ui.paint(sel ? 0xFFFFF59D : 0xFFE8D9B0);
-            c.drawRoundRect(new RectF(bx, by, bx + 140, by + 140), 20, 20, bp);
+            Paint bp = Ui.paint(sel ? 0xFFFFF59D : 0xFFEAD9AC);
+            c.drawRoundRect(new RectF(bx, by, bx + 140, by + 140), 22, 22, bp);
             Paint st = Ui.paint(0xFF8D6E63);
             st.setStyle(Paint.Style.STROKE);
-            st.setStrokeWidth(5);
-            c.drawRoundRect(new RectF(bx, by, bx + 140, by + 140), 20, 20, st);
-            Art.drawMon(c, Defs.mon(m.id).art, bx + 70, by + 78, 90 * 0.8f, t, false, 0);
-            Ui.textC(c, "Nv " + m.lvl, bx + 70, by + 132, 24, true, 0xFF3A2E20);
+            st.setStrokeWidth(6);
+            c.drawRoundRect(new RectF(bx, by, bx + 140, by + 140), 22, 22, st);
+            Art.drawMon(c, Defs.mon(m.id).art, bx + 70, by + 74, 78, t, false, 0);
+            Ui.textCO(c, "Nv " + m.lvl, bx + 70, by + 134, 24, true, 0xFF3A2E20);
         }
-        if (bench.size() > 4) Ui.textC(c, "+" + (bench.size() - 4) + " más", 660, 1800, 26, true, 0xFF6D4C41);
-        Ui.textC(c, "Huecos: " + g.save.placedCount() + "/" + g.save.maxSlots(g.save.wave), 410, 1866, 26, true, 0xFF2E7D32);
+        if (bench.size() > 4) Ui.textCO(c, "+" + (bench.size() - 4) + " más", 690, 1800, 26, true, 0xFF6D4C41);
+        Ui.textCO(c, "Huecos: " + g.save.placedCount() + "/" + g.save.maxSlots(g.save.wave), 410, 1868, 26, true, 0xFF2E7D32);
 
         btnEdit.draw(c, t);
         btnSummon.draw(c, t);

@@ -146,8 +146,8 @@ public class SummonScene implements GameView.Scene {
         Ui.textC(c, d.name, 540, 1290, 60, true, Ui.DARKTXT);
         Ui.textC(c, Defs.RARITY[d.rarity], 540, 1355, 36, true, col);
 
-        Ui.textC(c, d.desc, 540, 1490, 30, false, 0xFFE0E0E0);
-        Ui.textC(c, "(Toca para continuar" + (results.size() > 1 ? " · quedan " + results.size() : "") + ")",
+        Ui.textCO(c, d.desc, 540, 1490, 30, false, 0xFFE0E0E0);
+        Ui.textCO(c, "(Toca para continuar" + (results.size() > 1 ? " · quedan " + results.size() : "") + ")",
                 540, 1800, 30, true, 0xFFB39DDB);
     }
 }

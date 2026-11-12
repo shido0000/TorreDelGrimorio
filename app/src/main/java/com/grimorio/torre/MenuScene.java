@@ -1,10 +1,11 @@
 package com.grimorio.torre;
 
 import android.graphics.Canvas;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.RadialGradient;
 import android.graphics.RectF;
-
-import java.util.Random;
+import android.graphics.Shader;
 
 /** Menú principal con historia, acceso a invocación, tienda y Pase. */
 public class MenuScene implements GameView.Scene {
@@ -13,24 +14,23 @@ public class MenuScene implements GameView.Scene {
     Ui.Btn bPlay, bSummon, bShop, bPass, bStory;
     boolean showOffline;
     String offlineMsg;
-    boolean showDaily;
     boolean checked = false;
 
     public MenuScene(GameView g) {
         this.g = g;
-        bPlay = new Ui.Btn(290, 980, 500, 130, "JUGAR", 0xFF66BB6A, 0xFF2E7D32, new Runnable() {
+        bPlay = new Ui.Btn(290, 1000, 500, 130, "JUGAR", 0xFF66BB6A, 0xFF2E7D32, new Runnable() {
             public void run() { g.setScene(new GameScene(g)); }
         });
-        bSummon = new Ui.Btn(290, 1140, 500, 110, "Invocar monstruos", 0xFFAB47BC, 0xFF6A1B9A, new Runnable() {
+        bSummon = new Ui.Btn(290, 1155, 500, 105, "Invocar monstruos", 0xFFAB47BC, 0xFF6A1B9A, new Runnable() {
             public void run() { g.setScene(new SummonScene(g)); }
         });
-        bShop = new Ui.Btn(290, 1270, 500, 110, "Tienda y mejoras", 0xFFFFB300, 0xFFE65100, new Runnable() {
+        bShop = new Ui.Btn(290, 1280, 500, 105, "Tienda y mejoras", 0xFFFFB300, 0xFFE65100, new Runnable() {
             public void run() { g.setScene(new ShopScene(g)); }
         });
-        bPass = new Ui.Btn(290, 1400, 500, 110, "Pase del Invocador", 0xFF42A5F5, 0xFF1565C0, new Runnable() {
+        bPass = new Ui.Btn(290, 1405, 500, 105, "Pase del Invocador", 0xFF42A5F5, 0xFF1565C0, new Runnable() {
             public void run() { g.setScene(new SubScene(g)); }
         });
-        bStory = new Ui.Btn(290, 1530, 500, 100, "Historia", 0xFF90A4AE, 0xFF455A64, new Runnable() {
+        bStory = new Ui.Btn(290, 1530, 500, 95, "Historia", 0xFF90A4AE, 0xFF455A64, new Runnable() {
             public void run() { g.setScene(new StoryScene(g, Math.max(0, g.save.story - 1), new MenuScene(g))); }
         });
     }
@@ -56,9 +56,8 @@ public class MenuScene implements GameView.Scene {
     public void touch(int action, float x, float y) {
         if (action != android.view.MotionEvent.ACTION_UP) return;
         if (showOffline) { showOffline = false; return; }
-        if (showDaily) { showDaily = false; g.persist(); return; }
         hit(bPlay, x, y); hit(bSummon, x, y); hit(bShop, x, y); hit(bPass, x, y); hit(bStory, x, y);
-        if (dailyAvailable() && Math.abs(x - 540) < 260 && Math.abs(y - 870) < 60) {
+        if (dailyAvailable() && Math.abs(x - 540) < 280 && Math.abs(y - 880) < 60) {
             g.save.lastDailyClaim = System.currentTimeMillis();
             g.save.addGems(100);
             g.persist();
@@ -75,46 +74,87 @@ public class MenuScene implements GameView.Scene {
     }
 
     public void draw(Canvas c, float t) {
-        // fondo
-        c.drawRect(0, 0, 1080, 1920, Ui.paint(0xFF7EC850));
-        Random rnd = new Random(99);
-        for (int i = 0; i < 14; i++) {
-            float x = rnd.nextFloat() * 1080, y = 500 + rnd.nextFloat() * 1300;
-            int k = rnd.nextInt(3);
-            if (k == 0) Art.drawTree(c, x, y, 120 + rnd.nextFloat() * 80, rnd.nextInt(3));
-            else if (k == 1) Art.drawRock(c, x, y, 50);
-            else Art.drawFlower(c, x, y, 40, rnd.nextInt(3));
+        // cielo con degradado y sol
+        Paint sky = Ui.paint(0);
+        sky.setShader(new LinearGradient(0, 0, 0, 1920,
+                0xFF7EC8F0, 0xFFB8E6A0, Shader.TileMode.CLAMP));
+        c.drawRect(0, 0, 1080, 1920, sky);
+        Paint sun = Ui.paint(0);
+        sun.setShader(new RadialGradient(880, 240, 260,
+                0xFFFFF59D, 0x00FFF59D, Shader.TileMode.CLAMP));
+        c.drawCircle(880, 240, 260, sun);
+        Art.drawCoin(c, 880, 240, 70);
+
+        // nubes
+        Paint cloud = Ui.paint(0xE6FFFFFF);
+        for (int i = 0; i < 5; i++) {
+            float cx2 = ((t * (10 + i * 6) + i * 260) % 1300) - 110;
+            float cy2 = 130 + (i % 3) * 90;
+            c.drawOval(new RectF(cx2 - 100, cy2 - 30, cx2 + 100, cy2 + 30), cloud);
+            c.drawOval(new RectF(cx2 - 45, cy2 - 58, cx2 + 55, cy2 + 8), cloud);
         }
+
+        // colinas
+        Paint hill1 = Ui.paint(0xFF66BB6A);
+        c.drawOval(new RectF(-300, 1150, 700, 1750), hill1);
+        Paint hill2 = Ui.paint(0xFF57A85C);
+        c.drawOval(new RectF(400, 1200, 1400, 1800), hill2);
+        // pradera
+        Paint grass = Ui.paint(0);
+        grass.setShader(new LinearGradient(0, 1350, 0, 1920,
+                0xFF7EC850, 0xFF5FAE4A, Shader.TileMode.CLAMP));
+        c.drawRect(0, 1380, 1080, 1920, grass);
+
+        // decoración
+        Art.drawTree(c, 120, 1420, 200, 0);
+        Art.drawTree(c, 960, 1450, 230, 1);
+        Art.drawBush(c, 250, 1560, 120);
+        Art.drawFlower(c, 60, 1700, 60, 0);
+        Art.drawFlower(c, 1010, 1660, 60, 1);
+        Art.drawRock(c, 880, 1760, 70);
+
         // torre al fondo
-        Ui.paint(0xFF8D6E63);
-        c.drawRoundRect(new RectF(430, 380, 650, 900), 20, 20, Ui.paint(0xFF8D6E63));
-        c.drawRoundRect(new RectF(400, 330, 680, 420), 24, 24, Ui.paint(0xFF6D4C41));
-        c.drawRect(500, 500, 580, 620, Ui.paint(0xFF4E342E));
-        c.drawRect(500, 700, 580, 820, Ui.paint(0xFF4E342E));
-        // banderín
-        c.drawLine(540, 330, 540, 220, Ui.paint(0xFF5D4037));
-        Path2(c, 540, 225, 640, 260, 540, 295, 0xFFE53935);
-        // personajes
-        Art.drawMon(c, 7, 250, 870, 200, t, false, 0);
-        Art.drawMon(c, 3, 830, 880, 170, t, false, 0);
-        Art.drawPortrait(c, 0, 540, 830, 150, t);
+        c.drawRoundRect(new RectF(440, 560, 640, 1100), 24, 24, Ui.paint(0xFF8D6E63));
+        c.drawRoundRect(new RectF(410, 500, 670, 600), 28, 28, Ui.paint(0xFF6D4C41));
+        c.drawRect(500, 700, 580, 830, Ui.paint(0xFF4E342E));
+        c.drawRect(500, 930, 580, 1060, Ui.paint(0xFF4E342E));
+        c.drawLine(540, 500, 540, 380, Ui.paint(0xFF5D4037));
+        android.graphics.Path flag = new android.graphics.Path();
+        flag.moveTo(540, 385); flag.lineTo(650, 425); flag.lineTo(540, 465); flag.close();
+        c.drawPath(flag, Ui.paint(0xFFE53935));
+        Paint fs = Ui.paint(Ui.OUTLINE);
+        fs.setStyle(Paint.Style.STROKE);
+        fs.setStrokeWidth(6);
+        c.drawPath(flag, fs);
+
+        // personajes flotando
+        float bob1 = (float) Math.sin(t * 2) * 14;
+        float bob2 = (float) Math.sin(t * 2 + 1.5f) * 12;
+        Art.drawMon(c, 7, 220, 1210 + bob1, 190, t, false, 0);
+        Art.drawMon(c, 3, 860, 1230 + bob2, 160, t, false, 0);
+        Art.drawPortrait(c, 0, 540, 1150, 170, t);
 
         // título
-        Ui.panel(c, 140, 90, 800, 190, 0xFF311B92, 0xFF1A0560);
-        Ui.textC(c, "LA TORRE DEL GRIMORIO", 540, 165, 56, true, 0xFFFFC93C);
-        Ui.textC(c, "Idle · AFK · Tower Defense", 540, 230, 34, false, 0xFFCE93D8);
+        Ui.panel(c, 120, 80, 840, 210, 0xFF311B92, 0xFF1A0560);
+        Paint tp = Ui.text(64, true, 0xFFFFC93C);
+        tp.setTextAlign(Paint.Align.CENTER);
+        Ui.textO(c, "LA TORRE DEL", 540, 165, tp);
+        Paint tp2 = Ui.text(76, true, 0xFFFFE082);
+        tp2.setTextAlign(Paint.Align.CENTER);
+        Ui.textO(c, "GRIMORIO", 540, 255, tp2);
+        Ui.textCO(c, "Idle · AFK · Tower Defense", 540, 300, 32, false, 0xFFCE93D8);
 
         // recursos
-        Ui.panel(c, 30, 300, 1020, 90, 0xFFF5E6C8, 0xFF8D6E63);
-        Art.drawCoin(c, 90, 345, 28);
-        Ui.textC(c, Ui.fmt(g.save.gold), 135, 360, 38, true, 0xFFB8860B);
-        Art.drawGem(c, 420, 345, 24);
-        Ui.textC(c, String.valueOf(g.save.gems), 460, 360, 38, true, 0xFF00838F);
-        Ui.textC(c, "Oleada " + Math.max(1, g.save.wave) + " · Récord " + g.save.bestWave, 1000, 360, 32, true, 0xFF3A2E20);
+        Ui.panel(c, 30, 320, 1020, 90, 0xFFF7EBC9, 0xFF8D6E63);
+        Art.drawCoin(c, 90, 365, 30);
+        Ui.textCO(c, Ui.fmt(g.save.gold), 148, 380, 40, true, 0xFF9C6A00);
+        Art.drawGem(c, 430, 365, 26);
+        Ui.textCO(c, String.valueOf(g.save.gems), 474, 380, 40, true, 0xFF00838F);
+        Ui.textCO(c, "Oleada " + Math.max(1, g.save.wave) + " · Récord " + g.save.bestWave, 1000, 380, 32, true, 0xFF3A2E20);
 
         if (dailyAvailable()) {
-            float pulse = 1 + (float) Math.sin(t * 5) * 0.05f;
-            Ui.textC(c, "★ Recompensa diaria del Pase: +100 gemas ★", 540, 880, 36 * pulse, true, 0xFFFFC93C);
+            float pulse = 1 + (float) Math.sin(t * 5) * 0.04f;
+            Ui.textCO(c, "★ Recompensa diaria del Pase: +100 gemas ★", 540, 890, 36 * pulse, true, 0xFFFFF176);
         }
 
         bPlay.draw(c, t);
@@ -124,39 +164,22 @@ public class MenuScene implements GameView.Scene {
         bStory.draw(c, t);
 
         if (!g.save.paseDisponible()) {
-            Ui.textC(c, "Prueba de fundador: " + g.save.diasPruebaRestantes() + " día(s) restantes",
-                    540, 1690, 30, true, 0xFF33691E);
+            Ui.textCO(c, "Prueba de fundador: " + g.save.diasPruebaRestantes() + " día(s) restantes",
+                    540, 1700, 30, true, 0xFF33691E);
         } else if (g.save.pasePagado()) {
-            Ui.textC(c, "Pase del Invocador ACTIVO", 540, 1690, 30, true, 0xFF1565C0);
+            Ui.textCO(c, "Pase del Invocador ACTIVO", 540, 1700, 30, true, 0xFF1565C0);
         } else {
-            Ui.textC(c, "Tu prueba terminó: ¡suscríbete al Pase!", 540, 1690, 30, true, 0xFFB71C1C);
+            Ui.textCO(c, "Tu prueba terminó: ¡suscríbete al Pase!", 540, 1700, 30, true, 0xFFB71C1C);
         }
-        Ui.textC(c, "v1.0 · Hecho con magia chibi", 540, 1880, 24, false, 0xFF33691E);
+        Ui.textCO(c, "v1.1 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
 
         if (showOffline) {
             Paint dim = Ui.paint(0x99000000);
             c.drawRect(0, 0, 1080, 1920, dim);
-            Ui.panel(c, 140, 700, 800, 420, 0xFFF5E6C8, 0xFF8D6E63);
-            Ui.textC(c, "¡Bienvenido de nuevo!", 540, 790, 48, true, 0xFF3A2E20);
-            Ui.textC(c, offlineMsg, 540, 900, 34, false, 0xFF2E7D32);
-            Ui.textC(c, "(Toca para continuar)", 540, 1060, 26, false, 0xFF6D4C41);
+            Ui.panel(c, 140, 700, 800, 420, 0xFFF7EBC9, 0xFF8D6E63);
+            Ui.textCO(c, "¡Bienvenido de nuevo!", 540, 790, 48, true, 0xFF3A2E20);
+            Ui.textCO(c, offlineMsg, 540, 900, 34, false, 0xFF2E7D32);
+            Ui.textCO(c, "(Toca para continuar)", 540, 1060, 26, false, 0xFF6D4C41);
         }
-        if (showDaily) {
-            Paint dim = Ui.paint(0x99000000);
-            c.drawRect(0, 0, 1080, 1920, dim);
-        }
-    }
-
-    private void Path2(Canvas c, float x1, float y1, float x2, float y2, float x3, float y3, int col) {
-        android.graphics.Path p = new android.graphics.Path();
-        p.moveTo(x1, y1);
-        p.lineTo(x2, y2);
-        p.lineTo(x3, y3);
-        p.close();
-        c.drawPath(p, Ui.paint(col));
-        Paint st = Ui.paint(Ui.OUTLINE);
-        st.setStyle(Paint.Style.STROKE);
-        st.setStrokeWidth(5);
-        c.drawPath(p, st);
     }
 }
