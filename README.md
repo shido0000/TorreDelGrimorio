@@ -1,9 +1,18 @@
 # La Torre del Grimorio — Idle · AFK · Tower Defense
 
 Juego Android 100 % en español, inspirado en el estilo de *Summoner's Greed: Idle AFK Tower*:
-gráficos cartoon chibi dibujados por código (contornos gruesos, colores vibrantes), defensa de
-torre idle con oleadas infinitas, invocación tipo gacha, historia con capítulos, compras dentro
-de la app y un Pase de suscripción que se desbloquea a los 7 días de instalar la APK.
+gráficos cartoon chibi (contornos gruesos, colores vibrantes), defensa de torre idle con oleadas
+infinitas, invocación tipo gacha, historia con capítulos, compras dentro de la app y un Pase de
+suscripción que se desbloquea a los 7 días de instalar la APK.
+
+## Versión Unity (oficial)
+
+El juego fue **rehecho desde cero con Unity** como motor. El proyecto completo está en la
+carpeta [`unity/`](unity/) y las instrucciones para abrirlo y generar el APK están en
+**[README-UNITY.md](README-UNITY.md)**.
+
+La versión antigua en Java puro (carpeta `app/` + `build/TorreDelGrimorio.apk`) se conserva
+como respaldo.
 
 ## La historia
 
