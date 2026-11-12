@@ -70,6 +70,10 @@ public final class Save {
     public int qKills, qWaves, qSummons;
     public int qClaimed;
 
+    // Logros permanentes (estadísticas totales)
+    public long totalKills, totalSummons, totalGold;
+    public long achClaimed;
+
     private static final String PREF = "grimorio";
     private static final String KEY = "save";
 
@@ -115,6 +119,10 @@ public final class Save {
             qWaves = o.optInt("qWaves", 0);
             qSummons = o.optInt("qSummons", 0);
             qClaimed = o.optInt("qClaimed", 0);
+            totalKills = o.optLong("totalKills", 0);
+            totalSummons = o.optLong("totalSummons", 0);
+            totalGold = o.optLong("totalGold", 0);
+            achClaimed = o.optLong("achClaimed", 0);
             mons.clear();
             JSONArray arr = o.optJSONArray("mons");
             if (arr != null) for (int i = 0; i < arr.length(); i++) mons.add(Mon.fromJson(arr.getJSONObject(i)));
@@ -152,6 +160,10 @@ public final class Save {
             o.put("qWaves", qWaves);
             o.put("qSummons", qSummons);
             o.put("qClaimed", qClaimed);
+            o.put("totalKills", totalKills);
+            o.put("totalSummons", totalSummons);
+            o.put("totalGold", totalGold);
+            o.put("achClaimed", achClaimed);
             JSONArray arr = new JSONArray();
             for (Mon m : mons) arr.put(m.toJson());
             o.put("mons", arr);

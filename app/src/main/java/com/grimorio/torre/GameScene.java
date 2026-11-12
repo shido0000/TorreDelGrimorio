@@ -307,6 +307,7 @@ public class GameScene implements GameView.Scene {
         g.save.qWaves++;
         long bonus = (long) ((60 + 25 * n) * g.save.goldMult());
         g.save.gold += bonus;
+        g.save.totalGold += bonus;
         int gems = 0;
         if (n % 10 == 0) gems += 5;
         else if (n % 5 == 0) gems += 2;
@@ -340,7 +341,11 @@ public class GameScene implements GameView.Scene {
         if (bannerT > 0) bannerT -= dt;
 
         // ingresos idle
-        if (dtg > 0) g.save.gold += (long) (g.save.incomePerSec() * dtg);
+        if (dtg > 0) {
+            long inc = (long) (g.save.incomePerSec() * dtg);
+            g.save.gold += inc;
+            g.save.totalGold += inc;
+        }
 
         // oleada
         if (dtg > 0) {
@@ -536,7 +541,9 @@ public class GameScene implements GameView.Scene {
                 if (h.hp <= 0) {
                     long rw = (long) (Defs.killReward(h.d, g.save.wave) * g.save.goldMult());
                     g.save.gold += rw;
+                    g.save.totalGold += rw;
                     g.save.qKills++;
+                    g.save.totalKills++;
                     Sound.play(Sound.COIN);
                     burst(h.x, h.y - 30, 0xFFFFC93C, 12, 260, 750, 10);
                     fts.add(ft(h.x, h.y - 70, "+" + Ui.fmt(rw), 0xFFFFC93C));

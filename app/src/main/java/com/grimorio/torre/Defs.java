@@ -32,6 +32,9 @@ public final class Defs {
             mk("ojo", "Ojo Místico", "Vigía ancestral que ve todo el camino.", 2, 6, 60, 80, 1.2f, 3.2f, 3.2f),
             mk("draco", "Draco", "Dragón chibi heredero del Grimorio.", 3, 7, 110, 300, 0.9f, 2.4f, 8),
             mk("fenix", "Fénix", "Ave renacida del último hechizo de Orin.", 3, 8, 90, 260, 0.7f, 2.8f, 7),
+            mk("pengui", "Pengüi", "Caballero pingüino del hielo eterno del norte.", 1, 9, 24, 100, 0.65f, 1.9f, 1.6f),
+            mk("espectro", "Espectro", "Alma del grimorio que susurra maldiciones.", 2, 10, 65, 95, 1.0f, 3.0f, 3.4f),
+            mk("quimera", "Quimera", "Bestia de tres cabezas, guardiana del portal final.", 3, 11, 125, 330, 0.85f, 2.3f, 9),
     };
 
     private static MDef mk(String id, String name, String desc, int rarity, int art,
