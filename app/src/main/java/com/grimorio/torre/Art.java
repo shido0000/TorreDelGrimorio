@@ -32,7 +32,8 @@ public final class Art {
                 "mon0", "mon1", "mon2", "mon3", "mon4", "mon5", "mon6", "mon7", "mon8",
                 "hero0", "hero1", "hero2", "hero3", "hero4", "hero5",
                 "aprendiz", "orin", "chest", "coin", "gem",
-                "tree0", "tree1", "tree2", "rock", "flower0", "flower1", "flower2", "bush"
+                "tree0", "tree1", "tree2", "rock", "flower0", "flower1", "flower2", "bush",
+                "bg0", "bg1", "bg2", "bg3", "menubg"
         };
         for (String n : names) {
             int id = ctx.getResources().getIdentifier(n, "drawable", ctx.getPackageName());
@@ -42,6 +43,18 @@ public final class Art {
 
     private static Bitmap bmp(String key) {
         return CACHE.get(key);
+    }
+
+    /** Fondo de batalla pre-renderizado (césped, camino y decoración) según el capítulo. */
+    public static void drawBgBattle(Canvas c, int chapter) {
+        Bitmap b = bmp("bg" + (chapter % 4));
+        if (b != null) c.drawBitmap(b, 0, 0, BP);
+    }
+
+    /** Fondo del menú pre-renderizado (colinas, torre y pradera). */
+    public static void drawBgMenu(Canvas c) {
+        Bitmap b = bmp("menubg");
+        if (b != null) c.drawBitmap(b, 0, 0, BP);
     }
 
     /** Dibuja un sprite PNG centrado en (x, y) dentro de un cuadrado de lado s*1.5, anclado al suelo. */

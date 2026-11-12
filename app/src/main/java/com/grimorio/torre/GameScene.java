@@ -856,17 +856,10 @@ public class GameScene implements GameView.Scene {
 
     private void drawBoard(Canvas c, float t) {
         int chapter = ((g.save.wave - 1) / 10) % 4;
-        int[] grass = {0xFF7EC850, 0xFF5FAE4A, 0xFF8CCB5E, 0xFF6DBE55};
-        int[] grassD = {0xFF74BD49, 0xFF55A543, 0xFF81C258, 0xFF63B44E};
-        int[] pathCol = {0xFFC8996A, 0xFFB08A5E, 0xFFD0A475, 0xFFA9835C};
-        int pc = pathCol[chapter];
+        Art.drawBgBattle(c, chapter);
 
-        // franja de cielo con nubes detrás del HUD
-        Paint sky = Ui.paint(0);
-        sky.setShader(new android.graphics.LinearGradient(0, 0, 0, Y0,
-                0xFF8ED6FF, 0xFFCDEFB8, android.graphics.Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, 1080, Y0, sky);
-        Paint cloud = Ui.paint(0xD9FFFFFF);
+        // nubes animadas sobre el cielo
+        Paint cloud = Ui.paint(0xC8FFFFFF);
         for (int i = 0; i < 4; i++) {
             float cx2 = ((t * (12 + i * 5) + i * 340) % 1300) - 110;
             float cy2 = 60 + (i % 2) * 70;
@@ -874,96 +867,8 @@ public class GameScene implements GameView.Scene {
             c.drawOval(new RectF(cx2 - 40, cy2 - 52, cx2 + 50, cy2 + 10), cloud);
         }
 
-        // césped tipo pradera: baldosas alternadas con junta oscura y brillo superior
-        Paint grout = Ui.paint(Ui.darken(grass[chapter], 0.38f));
-        c.drawRect(0, Y0, 1080, 1920, grout);
-        for (int r = 0; r < ROWS; r++) {
-            for (int col = 0; col < COLS; col++) {
-                float tx = X0 + col * TILE, ty = Y0 + r * TILE;
-                Paint tile = Ui.paint((r + col) % 2 == 0 ? grass[chapter] : grassD[chapter]);
-                c.drawRoundRect(new RectF(tx + 4, ty + 4, tx + TILE - 4, ty + TILE - 4), 16, 16, tile);
-                Paint hl = Ui.paint(0x2EFFFFFF);
-                c.drawRoundRect(new RectF(tx + 12, ty + 9, tx + TILE - 12, ty + 34), 12, 12, hl);
-            }
-        }
-        Paint frame = Ui.paint(Ui.darken(grass[chapter], 0.45f));
-        frame.setStyle(Paint.Style.STROKE);
-        frame.setStrokeWidth(8);
-        c.drawRoundRect(new RectF(X0 - 6, Y0 - 6, X0 + COLS * TILE + 6, Y0 + ROWS * TILE + 6), 20, 20, frame);
-
-        // briznas de hierba deterministas
-        Random gr = new Random(55 + chapter);
-        Paint blade = Ui.paint(Ui.darken(grass[chapter], 0.28f));
-        blade.setStrokeWidth(5);
-        for (int i = 0; i < 90; i++) {
-            float x = gr.nextFloat() * 1080;
-            float y = Y0 + gr.nextFloat() * (1920 - Y0);
-            int cell = (int) (((y - Y0) / TILE)) * COLS + (int) ((x - X0) / TILE);
-            if (cell < 0 || cell >= isPath.length || isPath[cell]) continue;
-            c.drawLine(x, y, x - 8, y - 22, blade);
-            c.drawLine(x, y, x, y - 28, blade);
-            c.drawLine(x, y, x + 8, y - 20, blade);
-        }
-
-        // camino: borde oscuro + relleno + línea central discontinua
-        Path pth = new Path();
-        pth.moveTo(segX[0], segY[0]);
-        for (int i = 1; i < segX.length; i++) pth.lineTo(segX[i], segY[i]);
-        Paint pb = Ui.paint(0xFF6D4C41);
-        pb.setStyle(Paint.Style.STROKE);
-        pb.setStrokeWidth(TILE * 1.0f);
-        pb.setStrokeCap(Paint.Cap.BUTT);
-        pb.setStrokeJoin(Paint.Join.ROUND);
-        c.drawPath(pth, pb);
-        Paint pcx = Ui.paint(pc);
-        pcx.setStyle(Paint.Style.STROKE);
-        pcx.setStrokeWidth(TILE * 0.84f);
-        pcx.setStrokeCap(Paint.Cap.BUTT);
-        pcx.setStrokeJoin(Paint.Join.ROUND);
-        c.drawPath(pth, pcx);
-        Paint pIn = Ui.paint(Ui.lighten(pc, 0.18f));
-        pIn.setStyle(Paint.Style.STROKE);
-        pIn.setStrokeWidth(10);
-        pIn.setPathEffect(new android.graphics.DashPathEffect(new float[]{34, 30}, 0));
-        c.drawPath(pth, pIn);
-        // losas de piedra sobre el camino
-        Random rnd = new Random(1234);
-        for (int i = 0; i < 26; i++) {
-            float d = rnd.nextFloat() * pathLen;
-            posAt(d, tmpPos);
-            float ox2 = (rnd.nextFloat() - 0.5f) * TILE * 0.45f;
-            float oy2 = (rnd.nextFloat() - 0.5f) * TILE * 0.35f;
-            float rr2 = 9 + rnd.nextFloat() * 10;
-            c.drawCircle(tmpPos[0] + ox2, tmpPos[1] + oy2, rr2, Ui.paint(Ui.lighten(pc, 0.25f)));
-            Paint so = Ui.paint(Ui.darken(pc, 0.30f));
-            so.setStyle(Paint.Style.STROKE);
-            so.setStrokeWidth(4);
-            c.drawCircle(tmpPos[0] + ox2, tmpPos[1] + oy2, rr2, so);
-        }
-
-        // decoración con sprites
-        Random dr = new Random(77 + chapter);
-        for (int i = 0; i < 30; i++) {
-            int col = dr.nextInt(COLS), row = dr.nextInt(ROWS);
-            int cell = row * COLS + col;
-            if (isPath[cell] || valid[cell]) continue;
-            float x = X0 + col * TILE + TILE / 2f + (dr.nextFloat() - 0.5f) * 30;
-            float y = Y0 + row * TILE + TILE / 2f + (dr.nextFloat() - 0.5f) * 30;
-            int kind = dr.nextInt(5);
-            if (kind == 0) Art.drawTree(c, x, y, TILE * 1.0f, dr.nextInt(3));
-            else if (kind == 1) Art.drawRock(c, x, y, TILE * 0.55f);
-            else if (kind == 2) Art.drawFlower(c, x, y, TILE * 0.42f, dr.nextInt(3));
-            else if (kind == 3) Art.drawBush(c, x, y, TILE * 0.6f);
-        }
-
-        // viñeta sutil
-        Paint vg = Ui.paint(0);
-        vg.setShader(new android.graphics.RadialGradient(540, 960, 1150,
-                0x00000000, 0x26000000, android.graphics.Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, 1080, 1920, vg);
-
         // entrada: portal por donde entran los héroes
-        float ex = segX[0] + 20, ey = segY[0];
+        float ex = Math.max(segX[0] + 20, 10), ey = segY[0];
         Art.drawPortal(c, ex, ey, TILE * 0.42f, t * 0.7f);
     }
 

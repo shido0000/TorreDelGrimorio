@@ -93,58 +93,17 @@ public class MenuScene implements GameView.Scene {
     }
 
     public void draw(Canvas c, float t) {
-        // cielo con degradado y sol
-        Paint sky = Ui.paint(0);
-        sky.setShader(new LinearGradient(0, 0, 0, 1920,
-                0xFF7EC8F0, 0xFFB8E6A0, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, 1080, 1920, sky);
-        Paint sun = Ui.paint(0);
-        sun.setShader(new RadialGradient(880, 240, 260,
-                0xFFFFF59D, 0x00FFF59D, Shader.TileMode.CLAMP));
-        c.drawCircle(880, 240, 260, sun);
+        Art.drawBgMenu(c);
         Art.drawCoin(c, 880, 240, 70);
 
-        // nubes
-        Paint cloud = Ui.paint(0xE6FFFFFF);
+        // nubes animadas
+        Paint cloud = Ui.paint(0xD9FFFFFF);
         for (int i = 0; i < 5; i++) {
             float cx2 = ((t * (10 + i * 6) + i * 260) % 1300) - 110;
             float cy2 = 130 + (i % 3) * 90;
             c.drawOval(new RectF(cx2 - 100, cy2 - 30, cx2 + 100, cy2 + 30), cloud);
             c.drawOval(new RectF(cx2 - 45, cy2 - 58, cx2 + 55, cy2 + 8), cloud);
         }
-
-        // colinas
-        Paint hill1 = Ui.paint(0xFF66BB6A);
-        c.drawOval(new RectF(-300, 1150, 700, 1750), hill1);
-        Paint hill2 = Ui.paint(0xFF57A85C);
-        c.drawOval(new RectF(400, 1200, 1400, 1800), hill2);
-        // pradera
-        Paint grass = Ui.paint(0);
-        grass.setShader(new LinearGradient(0, 1350, 0, 1920,
-                0xFF7EC850, 0xFF5FAE4A, Shader.TileMode.CLAMP));
-        c.drawRect(0, 1380, 1080, 1920, grass);
-
-        // decoración
-        Art.drawTree(c, 120, 1420, 200, 0);
-        Art.drawTree(c, 960, 1450, 230, 1);
-        Art.drawBush(c, 250, 1560, 120);
-        Art.drawFlower(c, 60, 1700, 60, 0);
-        Art.drawFlower(c, 1010, 1660, 60, 1);
-        Art.drawRock(c, 880, 1760, 70);
-
-        // torre al fondo
-        c.drawRoundRect(new RectF(440, 560, 640, 1100), 24, 24, Ui.paint(0xFF8D6E63));
-        c.drawRoundRect(new RectF(410, 500, 670, 600), 28, 28, Ui.paint(0xFF6D4C41));
-        c.drawRect(500, 700, 580, 830, Ui.paint(0xFF4E342E));
-        c.drawRect(500, 930, 580, 1060, Ui.paint(0xFF4E342E));
-        c.drawLine(540, 500, 540, 380, Ui.paint(0xFF5D4037));
-        android.graphics.Path flag = new android.graphics.Path();
-        flag.moveTo(540, 385); flag.lineTo(650, 425); flag.lineTo(540, 465); flag.close();
-        c.drawPath(flag, Ui.paint(0xFFE53935));
-        Paint fs = Ui.paint(Ui.OUTLINE);
-        fs.setStyle(Paint.Style.STROKE);
-        fs.setStrokeWidth(6);
-        c.drawPath(flag, fs);
 
         // personajes flotando
         float bob1 = (float) Math.sin(t * 2) * 14;
@@ -211,7 +170,7 @@ public class MenuScene implements GameView.Scene {
         } else {
             Ui.textCO(c, "Tu prueba terminó: ¡suscríbete al Pase!", 540, 1725, 30, true, 0xFFB71C1C);
         }
-        Ui.textCO(c, "v1.5 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
+        Ui.textCO(c, "v1.6 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
 
         if (showOffline) {
             Paint dim = Ui.paint(0x99000000);
