@@ -74,6 +74,9 @@ public final class Save {
     public long totalKills, totalSummons, totalGold;
     public long achClaimed;
 
+    // Dificultad: 0 Normal, 1 Difícil, 2 Pesadilla
+    public int difficulty = 0;
+
     private static final String PREF = "grimorio";
     private static final String KEY = "save";
 
@@ -123,6 +126,7 @@ public final class Save {
             totalSummons = o.optLong("totalSummons", 0);
             totalGold = o.optLong("totalGold", 0);
             achClaimed = o.optLong("achClaimed", 0);
+            difficulty = o.optInt("difficulty", 0);
             mons.clear();
             JSONArray arr = o.optJSONArray("mons");
             if (arr != null) for (int i = 0; i < arr.length(); i++) mons.add(Mon.fromJson(arr.getJSONObject(i)));
@@ -164,6 +168,7 @@ public final class Save {
             o.put("totalSummons", totalSummons);
             o.put("totalGold", totalGold);
             o.put("achClaimed", achClaimed);
+            o.put("difficulty", difficulty);
             JSONArray arr = new JSONArray();
             for (Mon m : mons) arr.put(m.toJson());
             o.put("mons", arr);

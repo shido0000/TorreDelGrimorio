@@ -61,7 +61,8 @@ public final class Story {
                     new Line(4, "Elara", "Alto... ¿qué estamos haciendo? He gastado mil flechas y tu torre sigue en pie."),
                     new Line(0, "Tú (Guardián)", "¿Capitana Elara? ¿Vienes a rendirte?"),
                     new Line(4, "Elara", "Vengo a advertirte: Aldric ha contratado a los Asedios Dorados. Mercenarios que no conocen el miedo."),
-                    new Line(1, "Mocha", "Miau. (Le creo. Huele a problema.)"),
+                    new Line(1, "Mocha", "Miau-miau. (El portal escupe criaturas nuevas: un pingüino con casco. Se hace llamar Pengüi, caballero del hielo eterno.)"),
+                    new Line(0, "Tú (Guardián)", "Pengüi, acepto tu espada... o tu pico. Los Asedios Dorados descubrirán que el hielo también corta."),
                     new Line(0, "Tú (Guardián)", "Entonces seguiremos invocando. Gracias, capitana: la torre siempre tendrá sitio para quien la defienda."),
             }),
             new Chapter("Capítulo 7: El asedio de las cien banderas", 70, new Line[] {
@@ -74,6 +75,8 @@ public final class Story {
                     new Line(3, "Maestro Orin", "Aprendiz... ¿lo oyes? El Grimorio despierta. Cada moneda que defiendes lo hace más fuerte... y más hambriento."),
                     new Line(0, "Tú (Guardián)", "¿Hambriento?"),
                     new Line(3, "Maestro Orin", "El oro llama al oro. Pronto querrá más. Prométeme que nunca lo alimentarás con lo que amas."),
+                    new Line(3, "Maestro Orin", "Y escucha... una de las almas atrapadas en el Grimorio ha despertado: Espectro. Susurra maldiciones a quien toque tu cofre."),
+                    new Line(0, "Tú (Guardián)", "Bienvenido, Espectro. El Grimorio da, el Grimorio quita... y hoy, da un aliado."),
                     new Line(1, "Mocha", "Miau... (Yo no como oro. Bueno... casi nunca.)"),
             }),
             new Chapter("Capítulo 9: El precio del oro", 90, new Line[] {
@@ -85,7 +88,7 @@ public final class Story {
             new Chapter("Capítulo 10: El Invocador Coronado", 100, new Line[] {
                     new Line(2, "Sir Aldric", "Basta... me rindo. ¿De qué sirve una corona de héroe si no quedan héroes que la quieran llevar?"),
                     new Line(4, "Elara", "El rey ha caído... de rodillas. La torre gana."),
-                    new Line(0, "Tú (Guardián)", "Aquí no hay rey ni aprendiz, Aldric. Solo un invocador y sus monstruos. Quédate como aliado... o vete en paz."),
+                    new Line(0, "Tú (Guardián)", "Aquí no hay rey ni aprendiz, Aldric. Solo un invocador y sus monstruos: Pengüi, Espectro y hasta la Quimera del portal final. Quédate como aliado... o vete en paz."),
                     new Line(1, "Mocha", "Miau miau. (Modo historia completado. Oleadas infinitas: desbloqueadas. Ahora, ¿me das atún?)"),
                     new Line(3, "Maestro Orin", "Bien hecho, aprendiz. Ya no eres aprendiz... eres el Guardián del Grimorio."),
             }),

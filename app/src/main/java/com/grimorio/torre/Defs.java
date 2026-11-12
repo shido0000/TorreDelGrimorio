@@ -77,6 +77,18 @@ public final class Defs {
         return (float) Math.pow(1.16, n - 1) * (1 + n * 0.03f);
     }
 
+    public static final String[] DIF = {"Normal", "Difícil", "Pesadilla"};
+
+    /** Multiplicador de vida/daño enemigo según la dificultad elegida. */
+    public static float difEnemigo(int d) {
+        return d == 1 ? 1.5f : d == 2 ? 2.3f : 1f;
+    }
+
+    /** Multiplicador de recompensas en oro según la dificultad elegida. */
+    public static float difRecompensa(int d) {
+        return d == 1 ? 1.4f : d == 2 ? 2f : 1f;
+    }
+
     /** Lista de héroes que atacan en la oleada n. */
     public static ArrayList<String> buildWave(int n) {
         ArrayList<String> out = new ArrayList<String>();

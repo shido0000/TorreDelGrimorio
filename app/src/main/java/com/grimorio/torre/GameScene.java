@@ -305,7 +305,7 @@ public class GameScene implements GameView.Scene {
     private void waveCleared() {
         int n = g.save.wave;
         g.save.qWaves++;
-        long bonus = (long) ((60 + 25 * n) * g.save.goldMult());
+        long bonus = (long) ((60 + 25 * n) * g.save.goldMult() * Defs.difRecompensa(g.save.difficulty));
         g.save.gold += bonus;
         g.save.totalGold += bonus;
         int gems = 0;
@@ -399,7 +399,7 @@ public class GameScene implements GameView.Scene {
         Hero h = new Hero();
         h.d = Defs.hero(id);
         float s = Defs.waveScale(g.save.wave);
-        h.maxHp = h.d.hp * s;
+        h.maxHp = h.d.hp * s * Defs.difEnemigo(g.save.difficulty);
         h.hp = h.maxHp;
         h.dist = 0;
         if (h.d.boss) h.scale = 1.5f;
@@ -440,7 +440,7 @@ public class GameScene implements GameView.Scene {
                 h.cd -= dt;
                 if (h.cd <= 0) {
                     h.cd = h.d.atkSpd;
-                    float dmg = h.d.dmg * Defs.waveScale(g.save.wave);
+                    float dmg = h.d.dmg * Defs.waveScale(g.save.wave) * Defs.difEnemigo(g.save.difficulty);
                     tgt.hp -= dmg;
                     tgt.flash = 1;
                     Sound.play(Sound.HIT);
@@ -539,7 +539,7 @@ public class GameScene implements GameView.Scene {
                 burst(h.x, h.y - 30, p.col, 4, 160, 600, 8);
                 fts.add(ft(h.x, h.y - 40, String.valueOf((long) p.dmg), 0xFFFFEB3B));
                 if (h.hp <= 0) {
-                    long rw = (long) (Defs.killReward(h.d, g.save.wave) * g.save.goldMult());
+                    long rw = (long) (Defs.killReward(h.d, g.save.wave) * g.save.goldMult() * Defs.difRecompensa(g.save.difficulty));
                     g.save.gold += rw;
                     g.save.totalGold += rw;
                     g.save.qKills++;
@@ -874,16 +874,22 @@ public class GameScene implements GameView.Scene {
             c.drawOval(new RectF(cx2 - 40, cy2 - 52, cx2 + 50, cy2 + 10), cloud);
         }
 
-        // césped con degradado y cuadros
-        Paint pg = Ui.paint(0);
-        pg.setShader(new android.graphics.LinearGradient(0, Y0, 0, 1920,
-                Ui.lighten(grass[chapter], 0.10f), Ui.darken(grass[chapter], 0.10f), android.graphics.Shader.TileMode.CLAMP));
-        c.drawRect(0, Y0, 1080, 1920, pg);
-        Paint pd = Ui.paint(grassD[chapter]);
-        for (int r = 0; r < ROWS; r++)
-            for (int col = 0; col < COLS; col++)
-                if ((r + col) % 2 == 0)
-                    c.drawRect(X0 + col * TILE, Y0 + r * TILE, X0 + col * TILE + TILE, Y0 + r * TILE + TILE, pd);
+        // césped tipo pradera: baldosas alternadas con junta oscura y brillo superior
+        Paint grout = Ui.paint(Ui.darken(grass[chapter], 0.38f));
+        c.drawRect(0, Y0, 1080, 1920, grout);
+        for (int r = 0; r < ROWS; r++) {
+            for (int col = 0; col < COLS; col++) {
+                float tx = X0 + col * TILE, ty = Y0 + r * TILE;
+                Paint tile = Ui.paint((r + col) % 2 == 0 ? grass[chapter] : grassD[chapter]);
+                c.drawRoundRect(new RectF(tx + 4, ty + 4, tx + TILE - 4, ty + TILE - 4), 16, 16, tile);
+                Paint hl = Ui.paint(0x2EFFFFFF);
+                c.drawRoundRect(new RectF(tx + 12, ty + 9, tx + TILE - 12, ty + 34), 12, 12, hl);
+            }
+        }
+        Paint frame = Ui.paint(Ui.darken(grass[chapter], 0.45f));
+        frame.setStyle(Paint.Style.STROKE);
+        frame.setStrokeWidth(8);
+        c.drawRoundRect(new RectF(X0 - 6, Y0 - 6, X0 + COLS * TILE + 6, Y0 + ROWS * TILE + 6), 20, 20, frame);
 
         // briznas de hierba deterministas
         Random gr = new Random(55 + chapter);
@@ -920,14 +926,19 @@ public class GameScene implements GameView.Scene {
         pIn.setStrokeWidth(10);
         pIn.setPathEffect(new android.graphics.DashPathEffect(new float[]{34, 30}, 0));
         c.drawPath(pth, pIn);
-        // piedritas
-        Paint peb = Ui.paint(0x59FFFFFF);
+        // losas de piedra sobre el camino
         Random rnd = new Random(1234);
-        for (int i = 0; i < 46; i++) {
+        for (int i = 0; i < 26; i++) {
             float d = rnd.nextFloat() * pathLen;
             posAt(d, tmpPos);
-            float ox2 = (rnd.nextFloat() - 0.5f) * TILE * 0.5f;
-            c.drawCircle(tmpPos[0] + ox2, tmpPos[1] + (rnd.nextFloat() - 0.5f) * TILE * 0.4f, 5 + rnd.nextFloat() * 6, peb);
+            float ox2 = (rnd.nextFloat() - 0.5f) * TILE * 0.45f;
+            float oy2 = (rnd.nextFloat() - 0.5f) * TILE * 0.35f;
+            float rr2 = 9 + rnd.nextFloat() * 10;
+            c.drawCircle(tmpPos[0] + ox2, tmpPos[1] + oy2, rr2, Ui.paint(Ui.lighten(pc, 0.25f)));
+            Paint so = Ui.paint(Ui.darken(pc, 0.30f));
+            so.setStyle(Paint.Style.STROKE);
+            so.setStrokeWidth(4);
+            c.drawCircle(tmpPos[0] + ox2, tmpPos[1] + oy2, rr2, so);
         }
 
         // decoración con sprites
