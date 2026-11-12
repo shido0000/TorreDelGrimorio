@@ -11,7 +11,7 @@ import android.graphics.Shader;
 public class MenuScene implements GameView.Scene {
 
     GameView g;
-    Ui.Btn bPlay, bSummon, bShop, bPass, bStory;
+    Ui.Btn bPlay, bSummon, bShop, bPass, bStory, bSnd, bMus;
     boolean showOffline;
     String offlineMsg;
     boolean checked = false;
@@ -32,6 +32,21 @@ public class MenuScene implements GameView.Scene {
         });
         bStory = new Ui.Btn(290, 1530, 500, 95, "Historia", 0xFF90A4AE, 0xFF455A64, new Runnable() {
             public void run() { g.setScene(new StoryScene(g, Math.max(0, g.save.story - 1), new MenuScene(g))); }
+        });
+        bSnd = new Ui.Btn(60, 1770, 220, 90, "", 0xFF78909C, 0xFF455A64, new Runnable() {
+            public void run() {
+                g.save.soundOn = !g.save.soundOn;
+                Sound.setOn(g.save.soundOn);
+                if (g.save.soundOn) Sound.play(Sound.CLICK);
+                g.persist();
+            }
+        });
+        bMus = new Ui.Btn(300, 1770, 220, 90, "", 0xFF78909C, 0xFF455A64, new Runnable() {
+            public void run() {
+                g.save.musicOn = !g.save.musicOn;
+                g.persist();
+                g.applyMusic();
+            }
         });
     }
 
@@ -57,6 +72,7 @@ public class MenuScene implements GameView.Scene {
         if (action != android.view.MotionEvent.ACTION_UP) return;
         if (showOffline) { showOffline = false; return; }
         hit(bPlay, x, y); hit(bSummon, x, y); hit(bShop, x, y); hit(bPass, x, y); hit(bStory, x, y);
+        hit(bSnd, x, y); hit(bMus, x, y);
         if (dailyAvailable() && Math.abs(x - 540) < 280 && Math.abs(y - 880) < 60) {
             g.save.lastDailyClaim = System.currentTimeMillis();
             g.save.addGems(100);
@@ -66,7 +82,7 @@ public class MenuScene implements GameView.Scene {
     }
 
     private void hit(Ui.Btn b, float x, float y) {
-        if (b.hit(x, y) && b.on != null) b.on.run();
+        if (b.hit(x, y)) Ui.fire(b);
     }
 
     public boolean back() {
@@ -162,6 +178,10 @@ public class MenuScene implements GameView.Scene {
         bShop.draw(c, t);
         bPass.draw(c, t);
         bStory.draw(c, t);
+        bSnd.label = "Sonido: " + (g.save.soundOn ? "SÍ" : "NO");
+        bMus.label = "Música: " + (g.save.musicOn ? "SÍ" : "NO");
+        bSnd.draw(c, t);
+        bMus.draw(c, t);
 
         if (!g.save.paseDisponible()) {
             Ui.textCO(c, "Prueba de fundador: " + g.save.diasPruebaRestantes() + " día(s) restantes",
@@ -171,7 +191,7 @@ public class MenuScene implements GameView.Scene {
         } else {
             Ui.textCO(c, "Tu prueba terminó: ¡suscríbete al Pase!", 540, 1700, 30, true, 0xFFB71C1C);
         }
-        Ui.textCO(c, "v1.1 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
+        Ui.textCO(c, "v1.2 · Hecho con magia chibi", 540, 1885, 24, false, 0xFF33691E);
 
         if (showOffline) {
             Paint dim = Ui.paint(0x99000000);

@@ -58,6 +58,10 @@ public final class Save {
     // Historia: capítulos vistos
     public int story = 0;
 
+    // Audio
+    public boolean soundOn = true;
+    public boolean musicOn = true;
+
     private static final String PREF = "grimorio";
     private static final String KEY = "save";
 
@@ -95,6 +99,8 @@ public final class Save {
             subSku = o.optString("subSku", "");
             lastDailyClaim = o.optLong("lastDailyClaim", 0);
             story = o.optInt("story", 0);
+            soundOn = o.optBoolean("soundOn", true);
+            musicOn = o.optBoolean("musicOn", true);
             mons.clear();
             JSONArray arr = o.optJSONArray("mons");
             if (arr != null) for (int i = 0; i < arr.length(); i++) mons.add(Mon.fromJson(arr.getJSONObject(i)));
@@ -123,6 +129,8 @@ public final class Save {
             o.put("subSku", subSku == null ? "" : subSku);
             o.put("lastDailyClaim", lastDailyClaim);
             o.put("story", story);
+            o.put("soundOn", soundOn);
+            o.put("musicOn", musicOn);
             JSONArray arr = new JSONArray();
             for (Mon m : mons) arr.put(m.toJson());
             o.put("mons", arr);

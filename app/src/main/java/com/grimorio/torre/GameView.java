@@ -44,6 +44,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         if (save.install == 0) save.install = System.currentTimeMillis();
         save.lastSeen = System.currentTimeMillis();
         Art.init(act);
+        Sound.init(act);
+        Sound.setOn(save.soundOn);
         billing = new Billing(act, this);
         billing.start();
         setScene(new MenuScene(this));
@@ -51,6 +53,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     public void setScene(Scene s) {
         scene = s;
+        applyMusic();
+    }
+
+    /** Cambia la música según el ajuste guardado (0 = silencio). */
+    public void applyMusic() {
+        if (!save.musicOn) {
+            Music.stop();
+        } else if (scene instanceof GameScene) {
+            Music.play(act, R.raw.battle);
+        } else {
+            Music.play(act, R.raw.menu);
+        }
     }
 
     public void toast(String msg) {
@@ -75,6 +89,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     public void onPause_() {
         running = false;
         persist();
+        Music.pause();
         if (thread != null) {
             try { thread.join(500); } catch (InterruptedException ignored) { }
             thread = null;
@@ -83,6 +98,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     public void onResume_() {
         if (thread != null) return;
+        Music.resume();
         running = true;
         lastNs = System.nanoTime();
         thread = new Thread(this, "game");

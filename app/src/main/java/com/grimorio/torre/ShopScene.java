@@ -122,7 +122,7 @@ public class ShopScene implements GameView.Scene {
         hit(bBack, x, y);
         hit(bPass, x, y);
         for (Item it : items) {
-            if (it.btn.enabled && it.btn.hit(x, vy) && it.btn.on != null) { it.btn.on.run(); return; }
+            if (it.btn.enabled && it.btn.hit(x, vy)) { Ui.fire(it.btn); return; }
         }
     }
 
@@ -132,7 +132,7 @@ public class ShopScene implements GameView.Scene {
     }
 
     private void hit(Ui.Btn b, float x, float y) {
-        if (b.hit(x, y) && b.on != null) b.on.run();
+        if (b.hit(x, y)) Ui.fire(b);
     }
 
     public void draw(Canvas c, float t) {

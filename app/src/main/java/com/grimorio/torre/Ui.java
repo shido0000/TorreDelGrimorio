@@ -158,6 +158,14 @@ public final class Ui {
         c.drawRoundRect(tmp, r, r, p);
     }
 
+    /** Ejecuta la acción de un botón con sonido de clic. */
+    public static void fire(Btn b) {
+        if (b.on != null) {
+            Sound.play(Sound.CLICK);
+            b.on.run();
+        }
+    }
+
     public static String fmt(long v) {
         if (v >= 1000000000L) return String.format("%.2fB", v / 1000000000.0);
         if (v >= 1000000L) return String.format("%.2fM", v / 1000000.0);

@@ -37,6 +37,16 @@ public class GameScene implements GameView.Scene {
         float x, y, dmg;
         Hero target;
         RMon owner;
+        int col;
+        float[] hx = new float[8];
+        float[] hy = new float[8];
+        int hn;
+    }
+
+    class Part {
+        float x, y, vx, vy, life, maxLife, size;
+        int col;
+        float grav;
     }
 
     class FT {
@@ -61,6 +71,8 @@ public class GameScene implements GameView.Scene {
     ArrayList<Proj> projs = new ArrayList<Proj>();
     ArrayList<FT> fts = new ArrayList<FT>();
     ArrayList<Slash> slashes = new ArrayList<Slash>();
+    ArrayList<Part> parts = new ArrayList<Part>();
+    float shakeT, chestFlash;
     ArrayList<String> queue = new ArrayList<String>();
     float spawnT;
 
@@ -79,7 +91,7 @@ public class GameScene implements GameView.Scene {
     float saveT;
 
     Ui.Btn btnSpeed, btnPause, btnEdit, btnSummon, btnShop;
-    Ui.Btn bResume, bMenu, bUp, bSell, bMove, bClose;
+    Ui.Btn bResume, bMenu, bUp, bSell, bMove, bClose, bSnd, bMus;
     boolean showPausePanel;
 
     public GameScene(GameView g) {
@@ -115,6 +127,21 @@ public class GameScene implements GameView.Scene {
         });
         bMenu = new Ui.Btn(340, 1100, 400, 110, "Menú principal", 0xFFEF5350, 0xFFB71C1C, new Runnable() {
             public void run() { g.persist(); g.setScene(new MenuScene(g)); }
+        });
+        bSnd = new Ui.Btn(300, 1240, 250, 90, "", 0xFF78909C, 0xFF455A64, new Runnable() {
+            public void run() {
+                g.save.soundOn = !g.save.soundOn;
+                Sound.setOn(g.save.soundOn);
+                if (g.save.soundOn) Sound.play(Sound.CLICK);
+                g.persist();
+            }
+        });
+        bMus = new Ui.Btn(570, 1240, 250, 90, "", 0xFF78909C, 0xFF455A64, new Runnable() {
+            public void run() {
+                g.save.musicOn = !g.save.musicOn;
+                g.persist();
+                g.applyMusic();
+            }
         });
         bUp = new Ui.Btn(620, 1420, 200, 90, "Mejorar", 0xFF66BB6A, 0xFF2E7D32, new Runnable() {
             public void run() { upgradeSelected(); }
@@ -199,6 +226,52 @@ public class GameScene implements GameView.Scene {
         }
     }
 
+    // ---------- partículas y efectos ----------
+
+    private void burst(float x, float y, int col, int n, float spd, float grav, float size) {
+        Random r = new Random();
+        for (int i = 0; i < n; i++) {
+            Part p = new Part();
+            float a = r.nextFloat() * (float) (Math.PI * 2);
+            float v = spd * (0.4f + r.nextFloat() * 0.8f);
+            p.x = x; p.y = y;
+            p.vx = (float) Math.cos(a) * v;
+            p.vy = (float) Math.sin(a) * v - spd * 0.3f;
+            p.grav = grav;
+            p.maxLife = p.life = 0.4f + r.nextFloat() * 0.45f;
+            p.size = size * (0.5f + r.nextFloat());
+            p.col = col;
+            parts.add(p);
+        }
+    }
+
+    private void updateParts(float dt) {
+        for (int i = parts.size() - 1; i >= 0; i--) {
+            Part p = parts.get(i);
+            p.life -= dt;
+            if (p.life <= 0) { parts.remove(i); continue; }
+            p.vy += p.grav * dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+        }
+        if (shakeT > 0) shakeT -= dt;
+        if (chestFlash > 0) chestFlash -= dt * 2.5f;
+    }
+
+    private int projColor(int art) {
+        switch (art) {
+            case 0: return 0xFF7ED957;
+            case 1: return 0xFFBDBDBD;
+            case 2: return 0xFFFFD54F;
+            case 3: return 0xFFE53935;
+            case 4: return 0xFFB39DDB;
+            case 5: return 0xFF9E9E9E;
+            case 6: return 0xFFCE93D8;
+            case 7: return 0xFF66BB6A;
+            default: return 0xFFFF8A65;
+        }
+    }
+
     // ---------- oleadas ----------
 
     private void startWave(int n) {
@@ -231,6 +304,7 @@ public class GameScene implements GameView.Scene {
         bannerT = 3;
         state = 1;
         countdown = 4;
+        Sound.play(Sound.WAVE);
         g.persist();
     }
 
@@ -243,6 +317,8 @@ public class GameScene implements GameView.Scene {
         countdown = 3.5f;
         heroes.clear();
         projs.clear();
+        shakeT = 0.6f;
+        Sound.play(Sound.STEAL);
         g.persist();
     }
 
@@ -288,6 +364,7 @@ public class GameScene implements GameView.Scene {
             s.life -= dt;
             if (s.life <= 0) slashes.remove(i);
         }
+        if (dtg > 0) updateParts(dt);
 
         saveT += dt;
         if (saveT > 10) {
@@ -308,6 +385,7 @@ public class GameScene implements GameView.Scene {
         if (h.d.boss) {
             banner = "¡" + h.d.name + " ataca!";
             bannerT = 2.5f;
+            shakeT = 0.35f;
         }
     }
 
@@ -343,12 +421,16 @@ public class GameScene implements GameView.Scene {
                     float dmg = h.d.dmg * Defs.waveScale(g.save.wave);
                     tgt.hp -= dmg;
                     tgt.flash = 1;
+                    Sound.play(Sound.HIT);
+                    burst(tgt.x, tgt.y - 20, 0xFF78909C, 3, 130, 700, 9);
                     slashes.add(new Slash());
                     Slash sl = slashes.get(slashes.size() - 1);
                     sl.x = tgt.x; sl.y = tgt.y; sl.ang = (float) Math.toDegrees(Math.atan2(tgt.y - h.y, tgt.x - h.x)); sl.life = 0.25f;
                     if (tgt.hp <= 0) {
                         tgt.deadT = 12;
                         tgt.hp = 0;
+                        Sound.play(Sound.DIE);
+                        burst(tgt.x, tgt.y, 0xFFB0BEC5, 10, 220, 800, 12);
                         fts.add(ft(tgt.x, tgt.y, "¡Caído!", 0xFFEF5350));
                     }
                 }
@@ -364,6 +446,10 @@ public class GameScene implements GameView.Scene {
                     fts.add(ft(segX[segX.length - 1], segY[segY.length - 1] - 80, "-" + Ui.fmt(steal) + " oro", 0xFFEF5350));
                     chestHits++;
                     h.escaped = true;
+                    shakeT = 0.4f;
+                    chestFlash = 1;
+                    Sound.play(Sound.STEAL);
+                    burst(segX[segX.length - 1], segY[segY.length - 1] - 40, 0xFFEF5350, 12, 260, 700, 11);
                     if (chestHits >= 3) { waveFailed(); return; }
                 }
             }
@@ -402,7 +488,9 @@ public class GameScene implements GameView.Scene {
                 p.dmg = Defs.monDmg(m.d, m.src.lvl) * (float) g.save.dmgMult();
                 p.target = tgt;
                 p.owner = m;
+                p.col = projColor(m.d.art);
                 projs.add(p);
+                Sound.play(Sound.SHOOT);
             }
         }
     }
@@ -415,13 +503,24 @@ public class GameScene implements GameView.Scene {
             float dx = h.x - p.x, dy = h.y - p.y;
             float dd = (float) Math.sqrt(dx * dx + dy * dy);
             float step = 950 * dt;
+            // estela: desplaza el historial
+            for (int k = 6; k > 0; k--) {
+                p.hx[k] = p.hx[k - 1];
+                p.hy[k] = p.hy[k - 1];
+            }
+            p.hx[0] = p.x; p.hy[0] = p.y;
+            if (p.hn < 7) p.hn++;
             if (dd <= step + 12) {
                 h.hp -= p.dmg;
                 h.flash = 1;
+                Sound.play(Sound.HIT);
+                burst(h.x, h.y - 30, p.col, 4, 160, 600, 8);
                 fts.add(ft(h.x, h.y - 40, String.valueOf((long) p.dmg), 0xFFFFEB3B));
                 if (h.hp <= 0) {
                     long rw = (long) (Defs.killReward(h.d, g.save.wave) * g.save.goldMult());
                     g.save.gold += rw;
+                    Sound.play(Sound.COIN);
+                    burst(h.x, h.y - 30, 0xFFFFC93C, 12, 260, 750, 10);
                     fts.add(ft(h.x, h.y - 70, "+" + Ui.fmt(rw), 0xFFFFC93C));
                     if (p.owner != null) {
                         p.owner.src.xp += h.d.boss ? 25 : 5;
@@ -431,6 +530,8 @@ public class GameScene implements GameView.Scene {
                             p.owner.src.lvl++;
                             p.owner.maxHp = Defs.monHp(p.owner.d, p.owner.src.lvl) * (float) g.save.hpMult();
                             p.owner.hp = p.owner.maxHp;
+                            Sound.play(Sound.LEVEL);
+                            burst(p.owner.x, p.owner.y - 30, 0xFF66BB6A, 14, 240, 500, 11);
                             fts.add(ft(p.owner.x, p.owner.y - 90, "¡Nivel " + p.owner.src.lvl + "!", 0xFF66BB6A));
                         }
                     }
@@ -481,8 +582,8 @@ public class GameScene implements GameView.Scene {
         boolean down = action == MotionEvent.ACTION_DOWN;
 
         if (showPausePanel) {
-            if (down) { press(bResume, x, y); press(bMenu, x, y); }
-            else { click(bResume, x, y); click(bMenu, x, y); }
+            if (down) { press(bResume, x, y); press(bMenu, x, y); press(bSnd, x, y); press(bMus, x, y); }
+            else { click(bResume, x, y); click(bMenu, x, y); click(bSnd, x, y); click(bMus, x, y); }
             return;
         }
         if (selected >= 0) {
@@ -592,7 +693,7 @@ public class GameScene implements GameView.Scene {
     private void click(Ui.Btn b, float x, float y) {
         boolean was = b.press;
         b.press = false;
-        if (was && b.enabled && b.hit(x, y) && b.on != null) b.on.run();
+        if (was && b.enabled && b.hit(x, y)) Ui.fire(b);
     }
 
     public boolean back() {
@@ -607,6 +708,12 @@ public class GameScene implements GameView.Scene {
     // ---------- dibujo ----------
 
     public void draw(Canvas c, float t) {
+        c.save();
+        if (shakeT > 0) {
+            float mag = shakeT * 22;
+            Random r = new Random();
+            c.translate((r.nextFloat() - 0.5f) * mag, (r.nextFloat() - 0.5f) * mag);
+        }
         drawBoard(c, t);
         drawChest(c, t);
         for (RMon m : placed) {
@@ -631,12 +738,26 @@ public class GameScene implements GameView.Scene {
         for (Hero h : heroes) {
             Art.drawHero(c, h.d.art, h.x, h.y, TILE * 0.72f * h.scale, t, h.hp / h.maxHp, h.d.boss);
         }
+        // estelas de proyectiles
         for (Proj p : projs) {
-            c.drawCircle(p.x, p.y, 12, Ui.paint(0xFFFFEB3B));
-            Paint pe = Ui.paint(0xFFFF5722);
+            for (int k = p.hn - 1; k >= 1; k--) {
+                float f = 1 - k / (float) Math.max(1, p.hn);
+                Paint tr = Ui.paint(((int) (90 * f) << 24) | (p.col & 0xFFFFFF));
+                c.drawCircle(p.hx[k], p.hy[k], 10 * f + 3, tr);
+            }
+        }
+        for (Proj p : projs) {
+            c.drawCircle(p.x, p.y, 12, Ui.paint(p.col));
+            Paint pe = Ui.paint(0xFFFFFFFF);
             pe.setStyle(Paint.Style.STROKE);
             pe.setStrokeWidth(4);
             c.drawCircle(p.x, p.y, 12, pe);
+        }
+        // partículas
+        for (Part p : parts) {
+            float a = p.life / p.maxLife;
+            Paint pp = Ui.paint(((int) (a * 255) << 24) | (p.col & 0xFFFFFF));
+            c.drawCircle(p.x, p.y, p.size * (0.4f + a * 0.6f), pp);
         }
         for (Slash s : slashes) {
             Paint sp = Ui.paint(0xFFFFFFFF);
@@ -656,6 +777,11 @@ public class GameScene implements GameView.Scene {
             Ui.panel(c, 90, 420, 900, 130, 0xFF37474F, 0xFF263238);
             Ui.textCO(c, banner, 540, 500, 44, true, 0xFFFFC93C);
         }
+        if (chestFlash > 0) {
+            Paint fl = Ui.paint(((int) (chestFlash * 90) << 24) | 0xE53935);
+            c.drawRect(0, 0, 1080, 1920, fl);
+        }
+        c.restore();
     }
 
     private void drawValidCells(Canvas c) {
@@ -845,11 +971,15 @@ public class GameScene implements GameView.Scene {
     private void drawPausePanel(Canvas c) {
         Paint dim = Ui.paint(0x99000000);
         c.drawRect(0, 0, 1080, 1920, dim);
-        Ui.panel(c, 240, 700, 600, 640, 0xFFF5E6C8, 0xFF8D6E63);
+        Ui.panel(c, 240, 700, 600, 740, 0xFFF7EBC9, 0xFF8D6E63);
         Ui.textC(c, "PAUSA", 540, 790, 60, true, 0xFF3A2E20);
         Ui.textC(c, "Oleada " + g.save.wave + "  ·  Récord: " + g.save.bestWave, 540, 850, 30, false, 0xFF6D4C41);
         bResume.draw(c, 0);
         bMenu.draw(c, 0);
-        Ui.textC(c, "El oro se sigue ganando\nmientras estés fuera", 540, 1290, 26, false, 0xFF2E7D32);
+        bSnd.label = "Sonido: " + (g.save.soundOn ? "SÍ" : "NO");
+        bMus.label = "Música: " + (g.save.musicOn ? "SÍ" : "NO");
+        bSnd.draw(c, 0);
+        bMus.draw(c, 0);
+        Ui.textCO(c, "El oro se sigue ganando mientras estés fuera", 540, 1390, 26, false, 0xFF2E7D32);
     }
 }

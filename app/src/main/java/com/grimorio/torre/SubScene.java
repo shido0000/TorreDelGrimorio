@@ -49,7 +49,7 @@ public class SubScene implements GameView.Scene {
     }
 
     private void hit(Ui.Btn b, float x, float y) {
-        if (b.hit(x, y) && b.on != null) b.on.run();
+        if (b.hit(x, y)) Ui.fire(b);
     }
 
     public boolean back() {

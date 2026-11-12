@@ -40,6 +40,7 @@ public class SummonScene implements GameView.Scene {
             return;
         }
         g.save.gems -= cost;
+        Sound.play(Sound.SUMMON);
         results.clear();
         Random rnd = new Random();
         for (int i = 0; i < n; i++) {
@@ -77,7 +78,7 @@ public class SummonScene implements GameView.Scene {
     }
 
     private void hit(Ui.Btn b, float x, float y) {
-        if (b.hit(x, y) && b.on != null) b.on.run();
+        if (b.hit(x, y)) Ui.fire(b);
     }
 
     public boolean back() {
